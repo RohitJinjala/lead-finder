@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Lead Finder",
+    "slug": "lead-finder",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "leadfinder",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.leadfinder.app"
+    },
+    "android": {
+      "package": "com.leadfinder.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
+

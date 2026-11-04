@@ -1,0 +1,26 @@
+{
+  "name": "@lead-finder/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "devDependencies": {
+    "@types/node": "20.17.6",
+    "typescript": "5.7.2",
+    "vitest": "2.1.8",
+    "eslint": "9.15.0",
+    "@typescript-eslint/eslint-plugin": "8.15.0",
+    "@typescript-eslint/parser": "8.15.0"
+  },
+  "dependencies": {
+    "zod": "3.23.8"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "lead-finder-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lead Finder — monorepo root",
+  "scripts": {
+    "test": "npm --prefix shared test && npm --prefix collector test && npm --prefix app test",
+    "test:shared": "npm --prefix shared test",
+    "test:collector": "npm --prefix collector test",
+    "test:app": "npm --prefix app test",
+    "lint": "npm --prefix shared run lint && npm --prefix collector run lint && npm --prefix app run lint",
+    "lint:shared": "npm --prefix shared run lint",
+    "lint:collector": "npm --prefix collector run lint",
+    "lint:app": "npm --prefix app run lint",
+    "typecheck": "npm --prefix shared run typecheck && npm --prefix collector run typecheck && npm --prefix app run typecheck",
+    "typecheck:shared": "npm --prefix shared run typecheck",
+    "typecheck:collector": "npm --prefix collector run typecheck",
+    "typecheck:app": "npm --prefix app run typecheck",
+    "build:web": "cross-env USERPROFILE=./.tmp_home HOME=./.tmp_home CI=1 EXPO_NO_TELEMETRY=1 npm --prefix app run build:web",
+    "scan:secrets": "node scripts/scan-secrets.js",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run scan:secrets"
+  },
+  "workspaces": [
+    "app",
+    "collector",
+    "shared"
+  ],
+  "devDependencies": {
+    "@types/jest": "^30.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "cross-env": "^7.0.3",
+    "query-string": "^7.1.3"
+  }
+}

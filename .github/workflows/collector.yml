@@ -1,0 +1,41 @@
+name: Collector
+
+on:
+  schedule:
+    # Every 30 minutes
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: collector-run
+  cancel-in-progress: false   # never cancel a running collection
+
+timeout-minutes: 25
+
+jobs:
+  collect:
+    name: Run collector
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'collector/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: collector
+        run: npm ci
+
+      - name: Run collector
+        working-directory: collector
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: npm start
+
