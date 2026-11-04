@@ -32,15 +32,21 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
   const [undoTimeout, setUndoTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [showUndo, setShowUndo] = useState(false);
   const [undoAction, setUndoAction] = useState<(() => Promise<void>) | null>(null);
+  const [showFollowUpPicker, setShowFollowUpPicker] = useState(false);
+  const [toastMessage, setToastMessage] = useState('Action applied');
 
   const styles = getStyles(colors);
 
   async function handleAction(newStatus: string, undoFn?: () => Promise<void>) {
     setActionLoading(true);
     try {
+      const updates: Record<string, unknown> = { status: newStatus };
+      if (newStatus === 'contacted') {
+        updates.contacted_at = new Date().toISOString();
+      }
       const { error } = await supabase
         .from('leads')
-        .update({ status: newStatus, ...(newStatus === 'contacted' ? { contacted_at: new Date().toISOString() } : {}) })
+        .update(updates)
         .eq('id', lead.id);
 
       if (error) {
@@ -50,6 +56,7 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
 
       if (undoFn) {
         setUndoAction(() => undoFn);
+        setToastMessage(`Status changed to ${newStatus}`);
         setShowUndo(true);
         const t = setTimeout(() => {
           setShowUndo(false);
@@ -95,6 +102,7 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
             setActionLoading(true);
             try {
               await supabase.from('leads').update({ status: 'rejected', reject_reason: r }).eq('id', lead.id);
+              setToastMessage(`Rejected: ${r}`);
               setShowUndo(true);
               const t = setTimeout(() => { setShowUndo(false); onRefresh(); }, 5000);
               setUndoTimeout(t);
@@ -107,6 +115,78 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
             }
           })(),
         })),
+      ]
+    );
+  }
+
+  function handleContacted() {
+    Alert.alert(
+      'Mark as Contacted',
+      `Mark ${lead.lead_code} · ${lead.title.slice(0, 60)} as Contacted?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Mark Contacted',
+          onPress: () => void handleAction('contacted', async () => {
+            await supabase.from('leads').update({ status: lead.status, contacted_at: null }).eq('id', lead.id);
+            onRefresh();
+          }),
+        },
+      ]
+    );
+  }
+
+  function handleWon() {
+    Alert.alert(
+      'Convert to Deal (Won)',
+      `Mark ${lead.lead_code} · ${lead.title.slice(0, 60)} as Won and convert to Deal?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Convert to Won',
+          onPress: async () => {
+            setActionLoading(true);
+            try {
+              // 1. Update lead status
+              await supabase.from('leads').update({ status: 'won' }).eq('id', lead.id);
+
+              // 2. Insert into deals idempotently
+              const clientName = lead.business_name || (lead.module === 'maps' ? 'Local Business' : 'Web Client');
+              const { error: dealError } = await supabase.from('deals').upsert(
+                {
+                  lead_id: lead.id,
+                  deal_code: lead.lead_code,
+                  client: clientName,
+                  project: lead.title.slice(0, 100),
+                  value: lead.budget_amount ?? null,
+                  currency: lead.currency ?? 'USD',
+                  payment_status: 'unpaid',
+                  state: 'live',
+                  start_date: new Date().toISOString().slice(0, 10),
+                  notes: lead.notes ?? null,
+                },
+                { onConflict: 'lead_id' }
+              );
+
+              if (dealError) throw dealError;
+
+              setToastMessage(`Converted to Deal (${lead.lead_code})`);
+              setShowUndo(true);
+              const t = setTimeout(() => { setShowUndo(false); onRefresh(); }, 5000);
+              setUndoTimeout(t);
+              setUndoAction(() => async () => {
+                await supabase.from('deals').delete().eq('lead_id', lead.id);
+                await supabase.from('leads').update({ status: lead.status }).eq('id', lead.id);
+                onRefresh();
+              });
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : 'Failed to convert to deal';
+              Alert.alert('Error', msg);
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
       ]
     );
   }
@@ -127,6 +207,33 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
         },
       ]
     );
+  }
+
+  async function handleSetFollowUp(daysAhead: number | null) {
+    setShowFollowUpPicker(false);
+    setActionLoading(true);
+    try {
+      let targetIso: string | null = null;
+      if (daysAhead !== null) {
+        const d = new Date();
+        d.setDate(d.getDate() + daysAhead);
+        targetIso = d.toISOString();
+      }
+      await supabase.from('leads').update({ follow_up_at: targetIso }).eq('id', lead.id);
+      onRefresh();
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  function handleCopyDraft() {
+    if (!lead.draft_line) return;
+    if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
+      void navigator.clipboard.writeText(lead.draft_line);
+      Alert.alert('Copied', 'Opening draft line copied to clipboard.');
+    } else {
+      Alert.alert('Draft Opening Line', lead.draft_line);
+    }
   }
 
   const scoreColor = getScoreColor(lead.score, colors);
@@ -220,6 +327,13 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
         </View>
       )}
 
+      {/* Follow-up badge if set */}
+      {lead.follow_up_at && (
+        <Text style={styles.followUpText} accessibilityLabel={`Follow-up scheduled for: ${lead.follow_up_at.slice(0, 10)}`}>
+          📅 Follow-up: {lead.follow_up_at.slice(0, 10)}
+        </Text>
+      )}
+
       {/* Found at */}
       <Text style={styles.timestamp} accessibilityLabel={`Found ${formatRelativeTime(lead.found_at)}`}>
         🕐 {formatRelativeTime(lead.found_at)}
@@ -227,14 +341,62 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
 
       {/* Draft line */}
       {lead.draft_line && (
-        <Text style={styles.draftLine} accessibilityLabel={`Draft opening: ${lead.draft_line}`}>
-          ✏️ {lead.draft_line}
-        </Text>
+        <View style={styles.draftContainer}>
+          <Text style={styles.draftLine} accessibilityLabel={`Draft opening: ${lead.draft_line}`}>
+            ✏️ {lead.draft_line}
+          </Text>
+          <TouchableOpacity
+            style={styles.copyButton}
+            onPress={handleCopyDraft}
+            accessibilityRole="button"
+            accessibilityLabel="Copy draft line"
+          >
+            <Text style={styles.copyButtonText}>Copy</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Follow-up quick picker */}
+      {showFollowUpPicker && (
+        <View style={styles.pickerRow}>
+          <TouchableOpacity
+            style={styles.pickerChip}
+            onPress={() => void handleSetFollowUp(1)}
+            accessibilityRole="button"
+            accessibilityLabel="Follow up tomorrow"
+          >
+            <Text style={styles.pickerChipText}>+1 Day</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.pickerChip}
+            onPress={() => void handleSetFollowUp(3)}
+            accessibilityRole="button"
+            accessibilityLabel="Follow up in 3 days"
+          >
+            <Text style={styles.pickerChipText}>+3 Days</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.pickerChip}
+            onPress={() => void handleSetFollowUp(7)}
+            accessibilityRole="button"
+            accessibilityLabel="Follow up in 1 week"
+          >
+            <Text style={styles.pickerChipText}>+7 Days</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.pickerChip, { backgroundColor: colors.muted }]}
+            onPress={() => void handleSetFollowUp(null)}
+            accessibilityRole="button"
+            accessibilityLabel="Clear follow-up"
+          >
+            <Text style={[styles.pickerChipText, { color: colors.error }]}>Clear</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {/* Actions */}
       <View style={styles.actionsRow}>
-        {lead.status !== 'acceptable' && (
+        {lead.status !== 'acceptable' && lead.status !== 'won' && (
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: colors.success }]}
             onPress={handleAccept}
@@ -245,7 +407,39 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
             <Text style={styles.actionButtonText}>Accept</Text>
           </TouchableOpacity>
         )}
-        {lead.status !== 'rejected' && (
+        {lead.status !== 'contacted' && lead.status !== 'won' && (
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: colors.primary }]}
+            onPress={handleContacted}
+            disabled={actionLoading}
+            accessibilityRole="button"
+            accessibilityLabel={`Mark lead ${lead.lead_code} as Contacted`}
+          >
+            <Text style={styles.actionButtonText}>Contacted</Text>
+          </TouchableOpacity>
+        )}
+        {lead.status !== 'won' && (
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: '#8B5CF6' }]}
+            onPress={handleWon}
+            disabled={actionLoading}
+            accessibilityRole="button"
+            accessibilityLabel={`Mark lead ${lead.lead_code} as Won`}
+          >
+            <Text style={styles.actionButtonText}>Won</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: colors.secondary }]}
+          onPress={() => setShowFollowUpPicker(!showFollowUpPicker)}
+          accessibilityRole="button"
+          accessibilityLabel={`Set follow up for ${lead.lead_code}`}
+        >
+          <Text style={[styles.actionButtonText, { color: colors.secondaryForeground }]}>
+            {lead.follow_up_at ? 'Reschedule' : 'Follow-up'}
+          </Text>
+        </TouchableOpacity>
+        {lead.status !== 'rejected' && lead.status !== 'won' && (
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: colors.error }]}
             onPress={handleReject}
@@ -289,8 +483,8 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
 
       {/* Undo toast */}
       {showUndo && (
-        <View style={styles.undoToast} accessibilityLiveRegion="polite" accessibilityLabel="Action performed. Tap Undo to reverse.">
-          <Text style={styles.undoText}>Action applied</Text>
+        <View style={styles.undoToast} accessibilityLiveRegion="polite" accessibilityLabel={`${toastMessage}. Tap Undo to reverse.`}>
+          <Text style={styles.undoText}>{toastMessage}</Text>
           <TouchableOpacity
             onPress={() => {
               if (undoTimeout) clearTimeout(undoTimeout);
@@ -333,11 +527,18 @@ function getStyles(colors: ReturnType<typeof useTheme>['colors']) {
     redFlagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 4 },
     redFlagChip: { backgroundColor: colors.error + '20', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
     redFlagText: { fontSize: 11, color: colors.error },
+    followUpText: { fontSize: 12, color: colors.primary, fontWeight: '600', marginBottom: 4 },
     timestamp: { fontSize: 12, color: colors.mutedForeground, marginBottom: 4 },
-    draftLine: { fontSize: 13, color: colors.textSecondary, fontStyle: 'italic', marginBottom: 8, padding: 8, backgroundColor: colors.muted, borderRadius: 6 },
+    draftContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.muted, borderRadius: 6, padding: 8, marginBottom: 8 },
+    draftLine: { fontSize: 13, color: colors.textSecondary, fontStyle: 'italic', flex: 1 },
+    copyButton: { paddingHorizontal: 8, paddingVertical: 4, backgroundColor: colors.primary, borderRadius: 4, marginLeft: 8 },
+    copyButtonText: { color: colors.primaryForeground, fontSize: 11, fontWeight: '600' },
+    pickerRow: { flexDirection: 'row', gap: 6, marginBottom: 8, flexWrap: 'wrap' },
+    pickerChip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: colors.primary + '20' },
+    pickerChipText: { fontSize: 12, fontWeight: '600', color: colors.primary },
     actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-    actionButton: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
-    actionButtonText: { fontSize: 13, fontWeight: '600', color: '#fff' },
+    actionButton: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },
+    actionButtonText: { fontSize: 12, fontWeight: '600', color: '#fff' },
     undoToast: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, padding: 8, backgroundColor: colors.secondary, borderRadius: 6 },
     undoText: { color: colors.text, fontSize: 13 },
     undoButton: { color: colors.primary, fontSize: 13, fontWeight: '700' },

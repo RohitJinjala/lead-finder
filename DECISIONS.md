@@ -26,4 +26,7 @@ Every decision made autonomously (instead of asking the owner).
 | 20 | Explicit `postinstall` script `scripts/patch-ajv.js` for `ajv-keywords` | Custom package hoist | Automatically ensures `ajv` v8 is available to `ajv-keywords` across all package operations |
 | 21 | Write-only secret preview strictly masked (`first 4, last 2`, middle `*`) via `set_secret_value` and `secret_meta` | Storing plain secrets in client state | Prevents any accidental secret leakage in logs, screenshots, UI, or state persistence while still allowing identification |
 | 22 | Preserving `?id=...` query param in `makeWebDedupeKey` while stripping tracking params | Stripping all query params | Ensures sources like Hacker News that store the post identifier in the query string (`/item?id=...`) generate distinct dedupe keys rather than collapsing to a single key |
+| 23 | Pure React Native month grid with event indicator dots in `calendar.tsx` | Third-party calendar web wrappers | 100% universal rendering across Web, iOS, and Android without bundler polyfills or test mocking overhead |
+| 24 | Cross-platform CSV export: HTML Blob download on Web, React Native `Share.share` on mobile | Web-only anchor tag | Enables seamless data portability on both mobile devices and desktop web browsers |
+
 

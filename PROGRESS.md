@@ -100,18 +100,18 @@
 - [x] Git commit: phase 3: web collector and plans
 
 ## Phase 4 — Workflow
-- [ ] Calendar screen (month + day views, found_at, contacted_at, follow_up_at)
-- [ ] Due Today list
-- [ ] Follow-up date picker on lead cards
-- [ ] Deals screen (Live and Completed tabs)
-- [ ] Won conversion (lead -> deal, idempotent, same code)
-- [ ] Deal fields (client, project, value, currency, start, deadline, payment, notes)
-- [ ] Mark deal complete (confirmation + optional payment checkbox)
-- [ ] Theme setting (Light, Dark, System, persisted)
-- [ ] CSV export (web download, mobile share)
-- [ ] Calendar + deals tests
-- [ ] npm run verify green
-- [ ] Git commit: phase 4: workflow
+- [x] Calendar screen (month + day views, found_at, contacted_at, follow_up_at)
+- [x] Due Today list
+- [x] Follow-up date picker on lead cards
+- [x] Deals screen (Live and Completed tabs)
+- [x] Won conversion (lead -> deal, idempotent, same code)
+- [x] Deal fields (client, project, value, currency, start, deadline, payment, notes)
+- [x] Mark deal complete (confirmation + optional payment checkbox)
+- [x] Theme setting (Light, Dark, System, persisted)
+- [x] CSV export (web download, mobile share)
+- [x] Calendar + deals tests
+- [x] npm run verify green
+- [x] Git commit: phase 4: workflow
 
 ## Phase 5 — Maps Module
 - [ ] Maps module toggle

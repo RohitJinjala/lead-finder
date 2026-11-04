@@ -10,7 +10,7 @@
 | Phase 1 — Foundation | 86 | 86 | 0 | 0 | 50 shared (15 db via PGlite), 9 collector, 27 app (7 auth). verify green. |
 | Phase 2 — Secrets & Models | 104 | 104 | 0 | 0 | 59 shared (9 edge fn + 18 router + 15 db + 8 schema + 9 utils), 9 collector, 36 app (20 card + 7 auth + 5 secrets + 4 models). verify green. |
 | Phase 3 — Web Collector | 120 | 120 | 0 | 0 | 59 shared, 21 collector (4 runner + 8 sources + 6 filter + 3 alerts), 40 app (4 search profiles + 36 prior). verify green. |
-| Phase 4 — Workflow | — | — | — | — | Not started |
+| Phase 4 — Workflow | 135 | 135 | 0 | 0 | 59 shared, 21 collector, 55 app (4 calendar + 4 deals + 7 data/csv + 40 prior). 19 static routes exported. verify green. |
 | Phase 5 — Maps | — | — | — | — | Not started |
 | Phase 6 — Analytics | — | — | — | — | Not started |
 

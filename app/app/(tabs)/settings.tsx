@@ -43,6 +43,7 @@ export default function SettingsScreen() {
     'Secrets & Integrations': '/settings/secrets',
     'Models': '/settings/models',
     'Search Profiles': '/settings/search-profiles',
+    'Data': '/settings/data',
     'Collector Health': '/settings/collector-health',
     'Account / Auth': '/auth',
   };
