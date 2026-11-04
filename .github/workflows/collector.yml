@@ -10,12 +10,11 @@ concurrency:
   group: collector-run
   cancel-in-progress: false   # never cancel a running collection
 
-timeout-minutes: 25
-
 jobs:
   collect:
     name: Run collector
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
       - name: Checkout

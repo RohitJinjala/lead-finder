@@ -147,17 +147,17 @@
 - [x] Git commit: phase 6: analytics and polish
 
 ## Final Hardening
-- [ ] npm run verify x3 (three times in a row, all green)
-- [ ] Mutation sanity checks (5 critical pieces)
-- [ ] Security review (sections 3-4)
-- [ ] Error handling review
-- [ ] Accessibility labels review
-- [ ] Hostile-text rendering check
-- [ ] No-secret scan (repo + web build)
-- [ ] Workflow YAML check
-- [ ] README.md complete
-- [ ] TEST_REPORT.md complete (honest)
-- [ ] BLOCKERS.md complete
-- [ ] MORNING_CHECKLIST.md complete
-- [ ] DECISIONS.md complete
+- [x] npm run verify x3 (three times in a row, all green)
+- [x] Mutation sanity checks (5 critical pieces)
+- [x] Security review (sections 3-4)
+- [x] Error handling review
+- [x] Accessibility labels review
+- [x] Hostile-text rendering check
+- [x] No-secret scan (repo + web build)
+- [x] Workflow YAML check
+- [x] README.md complete
+- [x] TEST_REPORT.md complete (honest)
+- [x] BLOCKERS.md complete
+- [x] MORNING_CHECKLIST.md complete
+- [x] DECISIONS.md complete
 
