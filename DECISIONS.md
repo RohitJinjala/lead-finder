@@ -19,4 +19,9 @@ Every decision made autonomously (instead of asking the owner).
 | 13 | Web build deployed to Netlify (primary option; Vercel and Cloudflare Pages noted as alternatives) | Cloudflare Pages, Vercel | All three are free; Netlify has the simplest drag-and-drop for first deploy |
 | 14 | ESLint flat config (eslint.config.js) | .eslintrc | ESLint v9+ uses flat config; avoids deprecation warnings |
 | 15 | Use `zod` for JSON schema validation in shared router | `ajv`, manual checks | Zod works in both Node and Deno; TypeScript inference; lightweight |
+| 16 | Use `@electric-sql/pglite` in-process WASM Postgres for database tests | Docker container, Supabase CLI | Zero external daemon requirement, fast execution in Node environment, full Postgres 16 SQL compliance |
+| 17 | Use `gen_random_uuid()` with `uuid_generate_v4()` fallback | `uuid-ossp` extension | Modern PostgreSQL 13+ standard without requiring optional external extension packages in lightweight test environments |
+| 18 | Add role existence initialization in migration 002 | Hard requirement on pre-existing roles | Allows migrations to run cleanly on standalone Postgres, PGlite, and Supabase alike |
+| 19 | Standard schema grants on schema public for `anon` and `authenticated` roles | Manual per-table grants | Matches Supabase PostgREST default architecture where tables are accessible subject to RLS policies |
+| 20 | Explicit `postinstall` script `scripts/patch-ajv.js` for `ajv-keywords` | Custom package hoist | Automatically ensures `ajv` v8 is available to `ajv-keywords` across all package operations |
 

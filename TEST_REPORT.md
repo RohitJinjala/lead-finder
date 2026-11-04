@@ -7,7 +7,7 @@
 | Phase | Tests Run | Passed | Failed | Skipped | Notes |
 |-------|-----------|--------|--------|---------|-------|
 | Phase 0 — Scaffold | 64 | 64 | 0 | 0 | 35 shared, 9 collector, 20 app. verify green. |
-| Phase 1 — Foundation | — | — | — | — | Not started |
+| Phase 1 — Foundation | 86 | 86 | 0 | 0 | 50 shared (15 db via PGlite), 9 collector, 27 app (7 auth). verify green. |
 | Phase 2 — Secrets & Models | — | — | — | — | Not started |
 | Phase 3 — Web Collector | — | — | — | — | Not started |
 | Phase 4 — Workflow | — | — | — | — | Not started |

@@ -36,25 +36,25 @@
 - [x] Git commit: phase 0: scaffold
 
 ## Phase 1 — Foundation
-- [ ] SQL migration 001: all tables (leads, id_counters, deals, model_chain, model_status, search_profiles, search_plans, niche_offers, locations, search_presets, secret_meta, collector_runs, collector_lock, user_settings)
-- [ ] SQL migration 002: RLS policies (is_owner, claim_owner)
-- [ ] SQL migration 003: lead ID generator (trigger + atomic upsert on id_counters)
-- [ ] SQL migration 004: indexes
-- [ ] DB tests: lead code format, daily reset, concurrency, dedupe_key unique, RLS
-- [ ] App auth screen (email/password via Supabase Auth)
-- [ ] Owner claim flow (claim_owner RPC)
-- [ ] Leads screen with tabs (All, Acceptable, Rejected, Trash)
-- [ ] Module switcher (Web, Maps, Both)
-- [ ] Filter chips (status, score range, source, country, tags, date, unscored)
-- [ ] Search box (ID or text)
-- [ ] Web lead card (compact + detail) with all fields from section 11
-- [ ] Maps lead card (compact + detail) with all fields from section 11
-- [ ] Confirmation dialogs (Accept, Reject+reason, Delete, bulk)
-- [ ] Undo toast
-- [ ] Trash screen (restore, 30-day label)
-- [ ] App tests: both cards, dialogs, tabs, filters, search, trash
-- [ ] npm run verify green
-- [ ] Git commit: phase 1: foundation
+- [x] SQL migration 001: all tables (leads, id_counters, deals, model_chain, model_status, search_profiles, search_plans, niche_offers, locations, search_presets, secret_meta, collector_runs, collector_lock, user_settings)
+- [x] SQL migration 002: RLS policies (is_owner, claim_owner)
+- [x] SQL migration 003: lead ID generator (trigger + atomic upsert on id_counters)
+- [x] SQL migration 004: indexes
+- [x] DB tests: lead code format, daily reset, concurrency, dedupe_key unique, RLS
+- [x] App auth screen (email/password via Supabase Auth)
+- [x] Owner claim flow (claim_owner RPC)
+- [x] Leads screen with tabs (All, Acceptable, Rejected, Trash)
+- [x] Module switcher (Web, Maps, Both)
+- [x] Filter chips (status, score range, source, country, tags, date, unscored)
+- [x] Search box (ID or text)
+- [x] Web lead card (compact + detail) with all fields from section 11
+- [x] Maps lead card (compact + detail) with all fields from section 11
+- [x] Confirmation dialogs (Accept, Reject+reason, Delete, bulk)
+- [x] Undo toast
+- [x] Trash screen (restore, 30-day label)
+- [x] App tests: both cards, dialogs, tabs, filters, search, trash
+- [x] npm run verify green
+- [x] Git commit: phase 1: foundation
 
 ## Phase 2 — Secrets and Models
 - [ ] Supabase Vault / encrypted column design (decision in DECISIONS.md)

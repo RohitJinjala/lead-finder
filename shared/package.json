@@ -13,6 +13,7 @@
     "lint": "eslint src"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.15",
     "@types/node": "20.17.6",
     "typescript": "5.7.2",
     "vitest": "2.1.8",

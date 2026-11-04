@@ -1,9 +1,10 @@
 -- 20261104000001_create_tables.sql
 -- Lead Finder: Initial schema for all tables
 
--- Enable UUID extension
-create extension if not exists "uuid-ossp";
-create extension if not exists "pgcrypto";
+-- Enable UUID function (standard gen_random_uuid with uuid_generate_v4 alias for backwards compatibility)
+create or replace function uuid_generate_v4() returns uuid as $$
+  select gen_random_uuid();
+$$ language sql;
 
 -- 1. App Owner (single row for the sole owner)
 create table if not exists app_owner (

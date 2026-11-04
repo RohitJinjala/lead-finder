@@ -1,6 +1,27 @@
 -- 20261104000002_rls_and_owner.sql
 -- Lead Finder: Security definer functions, owner check, and RLS policies
 
+-- Ensure Supabase standard roles exist if running on standalone Postgres / PGlite
+do $$
+begin
+  if not exists (select 1 from pg_roles where rolname = 'anon') then
+    create role anon;
+  end if;
+  if not exists (select 1 from pg_roles where rolname = 'authenticated') then
+    create role authenticated;
+  end if;
+  if not exists (select 1 from pg_roles where rolname = 'service_role') then
+    create role service_role;
+  end if;
+end
+$$;
+
+-- Grant schema usage to roles so RLS policies can evaluate
+grant usage on schema public to anon, authenticated;
+grant all on all tables in schema public to anon, authenticated;
+grant all on all sequences in schema public to anon, authenticated;
+grant all on all routines in schema public to anon, authenticated;
+
 -- Helper function: is_owner()
 create or replace function public.is_owner()
 returns boolean
