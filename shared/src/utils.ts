@@ -67,10 +67,13 @@ export function escapeHtml(text: string): string {
  * Generates a dedupe key for a web lead from its URL.
  */
 export function makeWebDedupeKey(sourceUrl: string): string {
-  // Normalize the URL: strip trailing slashes and query params that change but don't identify the post
+  // Normalize the URL: strip trailing slashes, keep identifying 'id' query param if present
   const url = new URL(sourceUrl);
-  // For Reddit, the path alone is sufficient
-  return `web:${url.hostname}${url.pathname}`.toLowerCase().replace(/\/+$/, '');
+  let idPart = '';
+  if (url.searchParams.has('id')) {
+    idPart = `?id=${url.searchParams.get('id')}`;
+  }
+  return `web:${url.hostname}${url.pathname}${idPart}`.toLowerCase().replace(/\/+$/, '');
 }
 
 /**

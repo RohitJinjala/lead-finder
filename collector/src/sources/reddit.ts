@@ -30,13 +30,22 @@ export function parseRedditRSS(xml: string): RedditRSSItem[] {
       items.push({
         title: decodeHtmlEntities(title),
         link,
-        content: decodeHtmlEntities(stripHtml(content)).slice(0, BODY_MAX),
+        content: cleanText(content).slice(0, BODY_MAX),
         pubDate,
       });
     }
   }
 
   return items;
+}
+
+function cleanText(text: string): string {
+  // Decode entities first in case HTML tags are escaped (&lt;p&gt;)
+  const decoded = decodeHtmlEntities(text);
+  // Strip HTML tags
+  const stripped = stripHtml(decoded);
+  // Decode any nested entities
+  return decodeHtmlEntities(stripped);
 }
 
 function extractTag(xml: string, tag: string): string {

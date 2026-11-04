@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>r/forhire: hiring and forhire</title>
+    <link>https://www.reddit.com/r/forhire/</link>
+    <description>Subreddit for freelance gigs</description>
+    <item>
+      <title>[Hiring] Senior React Native Developer for Fintech MVP ($2,000 budget)</title>
+      <link>https://www.reddit.com/r/forhire/comments/12345/hiring_react_dev/</link>
+      <guid>https://www.reddit.com/r/forhire/comments/12345/hiring_react_dev/</guid>
+      <pubDate>Wed, 04 Nov 2026 10:00:00 +0000</pubDate>
+      <description>&lt;p&gt;Looking for an experienced React Native / Node.js developer to build an MVP. Budget is $2,000. US or EU preferred.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>[Hiring] WordPress Theme customization ($50)</title>
+      <link>https://www.reddit.com/r/forhire/comments/12346/hiring_wp/</link>
+      <guid>https://www.reddit.com/r/forhire/comments/12346/hiring_wp/</guid>
+      <pubDate>Wed, 04 Nov 2026 09:30:00 +0000</pubDate>
+      <description>&lt;p&gt;Need small WordPress css tweak.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
+

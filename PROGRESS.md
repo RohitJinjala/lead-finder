@@ -76,28 +76,28 @@
 - [x] Git commit: phase 2: secrets and models
 
 ## Phase 3 — Web Collector and Plans
-- [ ] Collector entry point (single run, lease acquire/release)
-- [ ] Reddit RSS adapter (r/forhire, r/hiring, r/freelance)
-- [ ] Hacker News Algolia API adapter
-- [ ] RemoteOK adapter
-- [ ] We Work Remotely adapter
-- [ ] Remotive adapter
-- [ ] Freelancer.com optional adapter (skip cleanly if no key)
-- [ ] Google Alerts RSS adapter (optional, owner-supplied URLs)
-- [ ] Keyword pre-filter (before AI calls)
-- [ ] Deduplication by dedupe_key
-- [ ] Per-run cap (configurable, default 40)
-- [ ] Search profiles UI (brief editor)
-- [ ] generate-plan Edge Function integration
-- [ ] Plan chips (editable, approve)
-- [ ] Approved-plan-only enforcement in collector
-- [ ] Telegram alert sender (threshold, quiet hours, digest)
-- [ ] Collector runs logging (collector_runs row)
-- [ ] GitHub Actions workflow (cron 30min, dispatch, Node 20)
-- [ ] Collector Health screen
-- [ ] Collector tests: all cases from section 14
-- [ ] npm run verify green
-- [ ] Git commit: phase 3: web collector and plans
+- [x] Collector entry point (single run, lease acquire/release)
+- [x] Reddit RSS adapter (r/forhire, r/hiring, r/freelance)
+- [x] Hacker News Algolia API adapter
+- [x] RemoteOK adapter
+- [x] We Work Remotely adapter
+- [x] Remotive adapter
+- [x] Freelancer.com optional adapter (skip cleanly if no key)
+- [x] Google Alerts RSS adapter (optional, owner-supplied URLs)
+- [x] Keyword pre-filter (before AI calls)
+- [x] Deduplication by dedupe_key
+- [x] Per-run cap (configurable, default 40)
+- [x] Search profiles UI (brief editor)
+- [x] generate-plan Edge Function integration
+- [x] Plan chips (editable, approve)
+- [x] Approved-plan-only enforcement in collector
+- [x] Telegram alert sender (threshold, quiet hours, digest)
+- [x] Collector runs logging (collector_runs row)
+- [x] GitHub Actions workflow (cron 30min, dispatch, Node 20)
+- [x] Collector Health screen
+- [x] Collector tests: all cases from section 14
+- [x] npm run verify green
+- [x] Git commit: phase 3: web collector and plans
 
 ## Phase 4 — Workflow
 - [ ] Calendar screen (month + day views, found_at, contacted_at, follow_up_at)

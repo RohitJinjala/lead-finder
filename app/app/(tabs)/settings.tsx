@@ -42,6 +42,8 @@ export default function SettingsScreen() {
   const navLinks: Record<string, string> = {
     'Secrets & Integrations': '/settings/secrets',
     'Models': '/settings/models',
+    'Search Profiles': '/settings/search-profiles',
+    'Collector Health': '/settings/collector-health',
     'Account / Auth': '/auth',
   };
 

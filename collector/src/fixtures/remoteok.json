@@ -1,0 +1,20 @@
+[
+  { "legal": "RemoteOK API terms of use" },
+  {
+    "id": "1001",
+    "url": "https://remoteok.com/remote-jobs/1001-react-native-contractor",
+    "position": "Freelance React Native Mobile Engineer",
+    "description": "Looking for contract React Native engineer to build offline features.",
+    "date": "2026-11-04T07:00:00Z",
+    "tags": ["react native", "typescript", "mobile"]
+  },
+  {
+    "id": "1002",
+    "url": "https://remoteok.com/remote-jobs/1002-fulltime-java-architect",
+    "position": "Full Time Enterprise Java Architect",
+    "description": "Permanent role for enterprise banking systems in Germany.",
+    "date": "2026-11-04T06:00:00Z",
+    "tags": ["java", "enterprise", "banking"]
+  }
+]
+
