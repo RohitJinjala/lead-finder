@@ -12,7 +12,7 @@
 | Phase 3 — Web Collector | 120 | 120 | 0 | 0 | 59 shared, 21 collector (4 runner + 8 sources + 6 filter + 3 alerts), 40 app (4 search profiles + 36 prior). verify green. |
 | Phase 4 — Workflow | 135 | 135 | 0 | 0 | 59 shared, 21 collector, 55 app (4 calendar + 4 deals + 7 data/csv + 40 prior). 19 static routes exported. verify green. |
 | Phase 5 — Maps | 151 | 151 | 0 | 0 | 59 shared, 29 collector (8 overpass + 21 prior), 63 app (3 modules + 4 niches + 56 prior). 22 static routes exported. verify green. |
-| Phase 6 — Analytics | — | — | — | — | Not started |
+| Phase 6 — Analytics | 167 | 167 | 0 | 0 | 67 shared (8 analytics + 59 prior), 30 collector (1 cleanup + 29 prior), 70 app (5 analytics + 2 notifications + 63 prior). 22 static routes exported. verify green. |
 
 ## What Ran Against Mocks (not real services)
 

@@ -133,18 +133,18 @@
 - [x] Git commit: phase 5: maps module
 
 ## Phase 6 — Analytics and Polish
-- [ ] Analytics SQL views / RPC functions (day buckets, Asia/Kolkata)
-- [ ] Analytics screen (filters: today/7d/30d/custom, module)
-- [ ] Charts: leads per day, funnel, by source, by country, by niche, score dist, model usage, deal value
-- [ ] Key metrics: useful-lead rate, reply rate, win rate, revenue
-- [ ] Daily cleanup job in collector (purge trash >30d, archive old rejected, trim text)
-- [ ] Accessibility pass (labels on all controls)
-- [ ] Empty and error states everywhere
-- [ ] Feature-flagged Expo push (logged in BLOCKERS.md)
-- [ ] Deploy instructions (Cloudflare Pages / Vercel / Netlify)
-- [ ] Analytics tests
-- [ ] npm run verify green
-- [ ] Git commit: phase 6: analytics and polish
+- [x] Analytics SQL views / RPC functions (day buckets, Asia/Kolkata)
+- [x] Analytics screen (filters: today/7d/30d/custom, module)
+- [x] Charts: leads per day, funnel, by source, by country, by niche, score dist, model usage, deal value
+- [x] Key metrics: useful-lead rate, reply rate, win rate, revenue
+- [x] Daily cleanup job in collector (purge trash >30d, archive old rejected, trim text)
+- [x] Accessibility pass (labels on all controls)
+- [x] Empty and error states everywhere
+- [x] Feature-flagged Expo push (logged in BLOCKERS.md)
+- [x] Deploy instructions (Cloudflare Pages / Vercel / Netlify)
+- [x] Analytics tests
+- [x] npm run verify green
+- [x] Git commit: phase 6: analytics and polish
 
 ## Final Hardening
 - [ ] npm run verify x3 (three times in a row, all green)
