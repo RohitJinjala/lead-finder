@@ -122,3 +122,4 @@ function getStyles(colors: ReturnType<typeof useTheme>['colors']) {
     bulletItem: { fontSize: 12, color: colors.textSecondary, lineHeight: 17 },
   });
 }
+

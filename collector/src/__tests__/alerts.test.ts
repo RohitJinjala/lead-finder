@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { sendAlerts } from '../alerts.js';
+import { sendAlerts, sendModelExhaustionAlert } from '../alerts.js';
 import type { CollectorSettings } from '../settings.js';
 import { clearSecretCache } from '../secrets.js';
 
@@ -63,6 +63,31 @@ describe('sendAlerts', () => {
     expect(fetchSpy).not.toHaveBeenCalledWith(
       expect.stringContaining('api.telegram.org'),
       expect.anything()
+    );
+  });
+
+  it('sends model exhaustion alert when Telegram is configured', async () => {
+    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({}),
+    } as Response);
+
+    const supabase = {
+      rpc: vi.fn().mockImplementation((_fn: string, params: { p_secret_name: string }) => {
+        if (params.p_secret_name === 'TELEGRAM_BOT_TOKEN') return Promise.resolve({ data: 'bot-token-123', error: null });
+        if (params.p_secret_name === 'TELEGRAM_CHAT_ID') return Promise.resolve({ data: 'chat-id-456', error: null });
+        return Promise.resolve({ data: null, error: new Error('Unknown') });
+      }),
+    } as unknown as Parameters<typeof sendModelExhaustionAlert>[0];
+
+    await sendModelExhaustionAlert(supabase, 'web');
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://api.telegram.org/botbot-token-123/sendMessage',
+      expect.objectContaining({
+        method: 'POST',
+      })
     );
   });
 });

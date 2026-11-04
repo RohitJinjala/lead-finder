@@ -242,4 +242,48 @@ describe('LeadCard — Confirmation dialogs', () => {
       expect.any(Array)
     );
   });
+
+  it('renders approximate local time with (approx.) label', () => {
+    renderWithTheme(<LeadCard lead={baseWebLead} onRefresh={jest.fn()} />);
+    expect(screen.getByText(/\(approx\.\)/)).toBeTruthy();
+  });
+
+  it('expands to show full description, history timeline and notes editor', () => {
+    renderWithTheme(<LeadCard lead={baseWebLead} onRefresh={jest.fn()} />);
+    
+    // Initially not expanded
+    expect(screen.queryByText('Full Description:')).toBeNull();
+
+    // Tap expand details
+    fireEvent.press(screen.getByLabelText('Expand details for 04-11-WEB-0001'));
+
+    expect(screen.getByText('Full Description:')).toBeTruthy();
+    expect(screen.getByText('History Timeline:')).toBeTruthy();
+    expect(screen.getByText('Notes & Observations:')).toBeTruthy();
+    expect(screen.getByLabelText('Lead notes editor')).toBeTruthy();
+    expect(screen.getByLabelText('Save lead notes')).toBeTruthy();
+  });
+
+  it('renders OSM Map button for maps lead', () => {
+    renderWithTheme(<LeadCard lead={baseMapsLead} onRefresh={jest.fn()} />);
+    expect(screen.getByLabelText('Open in OpenStreetMap')).toBeTruthy();
+  });
+
+  it('renders selectable checkbox when selectable prop is true', () => {
+    const toggleMock = jest.fn();
+    renderWithTheme(
+      <LeadCard
+        lead={baseWebLead}
+        onRefresh={jest.fn()}
+        selectable={true}
+        selected={false}
+        onToggleSelect={toggleMock}
+      />
+    );
+
+    const checkbox = screen.getByLabelText('Select lead 04-11-WEB-0001');
+    expect(checkbox).toBeTruthy();
+    fireEvent.press(checkbox);
+    expect(toggleMock).toHaveBeenCalled();
+  });
 });

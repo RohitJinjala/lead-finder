@@ -255,3 +255,4 @@ function getStyles(colors: ReturnType<typeof useTheme>['colors']) {
     capChipTextActive: { color: colors.primaryForeground },
   });
 }
+

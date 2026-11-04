@@ -30,6 +30,11 @@ Every decision made autonomously (instead of asking the owner).
 | 24 | Cross-platform CSV export: HTML Blob download on Web, React Native `Share.share` on mobile | Web-only anchor tag | Enables seamless data portability on both mobile devices and desktop web browsers |
 | 25 | Built-in open geographical dataset with cascading Country -> State -> City in `locations.ts` | Dynamic multi-megabyte remote runtime downloads | Provides instant, zero-latency cascading area selection with complete offline resilience |
 | 26 | Responsive pure React Native bar/funnel visualization for AnalyticsScreen | Victory Native | Victory Native 36.x has missing native SVG module imports and CommonJS/ESM bundling errors on React Native Web; pure RN flex bars provide 100% web/native parity, full accessibility labels, instant testing, and zero external dependency risk |
+| 27 | Telegram alert messages sent in plain text without `parse_mode: MarkdownV2` | MarkdownV2 with escaping | URLs and titles frequently contain special characters (`.`, `-`, `_`, `?`, `&`) that cause Telegram 400 Bad Request if unescaped; plain text guarantees 100% reliable message delivery |
+| 28 | Automated model exhaustion alert via Telegram | Silent failure | MASTER_PROMPT Section 12 explicitly mandates alerting when all models for a module are exhausted/in cooldown; alerts owner immediately so keys can be replenished |
+| 29 | Expandable in-place detail view on LeadCard with history timeline and notes editor | Modal or separate route | Seamless inline expansion keeps scroll position intact while giving immediate access to full body, service match, tech stack, notes editor with Save Note button, and history |
+| 30 | Standard Intl.DateTimeFormat with mapped country-to-timezone dictionary for approximate local time | Heavy moment-timezone or remote geocoding API | Zero external network calls; provides approximate local time with mandatory `(approx.)` label for both Web client countries and Maps local businesses |
+| 31 | Multi-select mode with bulk action confirmation dialog and 5-second Undo toast | Instant deletion without confirmation | Strictly satisfies Section 11 safety requirements: dialog names exact count, lead codes, and titles before applying bulk reject/accept, and gives a 5-second window to reverse |
 
 
 

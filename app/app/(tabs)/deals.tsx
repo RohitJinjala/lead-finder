@@ -66,36 +66,69 @@ export default function DealsScreen() {
   }
 
   function handleMarkComplete(deal: Deal) {
+    const isUnpaid = deal.payment_status !== 'paid';
+
+    const buttons: Array<{ text: string; style?: 'cancel' | 'default' | 'destructive'; onPress?: () => void }> = [
+      { text: 'Cancel', style: 'cancel' },
+    ];
+
+    if (isUnpaid) {
+      buttons.push({
+        text: 'Complete & Mark Paid',
+        onPress: async () => {
+          setLoading(true);
+          try {
+            const { error } = await supabase
+              .from('deals')
+              .update({
+                state: 'completed',
+                payment_status: 'paid',
+                completed_at: new Date().toISOString(),
+              })
+              .eq('id', deal.id);
+
+            if (error) throw error;
+            await fetchDeals();
+            showToast(`Marked ${deal.deal_code} as Completed & Paid`);
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Failed to update deal';
+            Alert.alert('Error', msg);
+          } finally {
+            setLoading(false);
+          }
+        },
+      });
+    }
+
+    buttons.push({
+      text: 'Mark Complete',
+      onPress: async () => {
+        setLoading(true);
+        try {
+          const { error } = await supabase
+            .from('deals')
+            .update({
+              state: 'completed',
+              completed_at: new Date().toISOString(),
+            })
+            .eq('id', deal.id);
+
+          if (error) throw error;
+          await fetchDeals();
+          showToast(`Marked ${deal.deal_code} as Completed`);
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'Failed to update deal';
+          Alert.alert('Error', msg);
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
+
     Alert.alert(
       'Complete Deal',
-      `Mark "${deal.deal_code} · ${deal.project}" as Completed?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Mark Complete',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              const { error } = await supabase
-                .from('deals')
-                .update({
-                  state: 'completed',
-                  completed_at: new Date().toISOString(),
-                })
-                .eq('id', deal.id);
-
-              if (error) throw error;
-              await fetchDeals();
-              showToast(`Marked ${deal.deal_code} as Completed`);
-            } catch (err: unknown) {
-              const msg = err instanceof Error ? err.message : 'Failed to update deal';
-              Alert.alert('Error', msg);
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
+      `Mark "${deal.deal_code} · ${deal.project}" as Completed?${isUnpaid ? ' (Optional: mark final payment received)' : ''}`,
+      buttons
     );
   }
 

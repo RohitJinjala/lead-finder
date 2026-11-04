@@ -1,4 +1,5 @@
 import React from 'react';
+import { Alert } from 'react-native';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import SecretsScreen from '../../app/settings/secrets';
 import { ThemeContext } from '../hooks/useTheme';
@@ -136,5 +137,32 @@ describe('SecretsScreen', () => {
     await waitFor(() => {
       expect(supabase.functions.invoke).toHaveBeenCalledWith('detect-telegram-chat');
     });
+  });
+
+  it('confirms replacement naming the secret when saving an existing secret name', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert');
+    renderScreen();
+    await screen.findByText('GROQ_API_KEY');
+
+    const addButton = screen.getByLabelText('Add Secret');
+    fireEvent.press(addButton);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Secret Name')).toBeTruthy();
+    });
+
+    const nameInput = screen.getByLabelText('Secret Name');
+    const valInput = screen.getByLabelText('Secret Value');
+    const saveButton = screen.getByLabelText('Save Secret');
+
+    fireEvent.changeText(nameInput, 'GROQ_API_KEY');
+    fireEvent.changeText(valInput, 'gsk_new_secret_key');
+    fireEvent.press(saveButton);
+
+    expect(alertSpy).toHaveBeenCalledWith(
+      'Replace Secret',
+      expect.stringContaining('GROQ_API_KEY'),
+      expect.any(Array)
+    );
   });
 });

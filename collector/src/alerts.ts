@@ -1,5 +1,4 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { escapeTelegramMarkdown } from '@lead-finder/shared';
 import { getSecret } from './secrets.js';
 import type { CollectorSettings } from './settings.js';
 
@@ -34,8 +33,6 @@ export async function sendAlerts(
   // Check quiet hours
   if (isQuietHours(settings)) {
     console.log('[alerts] Quiet hours active, deferring alerts.');
-    // Store pending alerts in DB for digest when quiet hours end
-    // The app UI will show a digest banner
     return;
   }
 
@@ -54,22 +51,18 @@ export async function sendAlerts(
   }
 }
 
-function buildAlertMessage(lead: LeadForAlert): string {
+export function buildAlertMessage(lead: LeadForAlert): string {
   const score = lead.score ?? 0;
   const country = lead.country ?? 'Unknown';
-  const title = escapeTelegramMarkdown(lead.title.slice(0, 100));
-  const code = escapeTelegramMarkdown(lead.lead_code);
-  const src = escapeTelegramMarkdown(lead.source);
-  const url = lead.source_url; // URLs don't need markdown escaping
 
-  return `🎯 *New Lead: ${code}*\n` +
-    `📋 ${title}\n` +
+  return `🎯 New Lead: ${lead.lead_code}\n` +
+    `📋 ${lead.title.slice(0, 100)}\n` +
     `⭐ Score: ${score} | 🌍 ${country}\n` +
-    `📡 Source: ${src}\n` +
-    `🔗 ${url}`;
+    `📡 Source: ${lead.source}\n` +
+    `🔗 ${lead.source_url}`;
 }
 
-async function sendTelegramMessage(botToken: string, chatId: string, text: string): Promise<void> {
+export async function sendTelegramMessage(botToken: string, chatId: string, text: string): Promise<void> {
   try {
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
@@ -79,7 +72,6 @@ async function sendTelegramMessage(botToken: string, chatId: string, text: strin
         body: JSON.stringify({
           chat_id: chatId,
           text,
-          parse_mode: 'MarkdownV2',
         }),
       }
     );
@@ -91,7 +83,24 @@ async function sendTelegramMessage(botToken: string, chatId: string, text: strin
   }
 }
 
-function isQuietHours(settings: CollectorSettings): boolean {
+export async function sendModelExhaustionAlert(
+  supabase: SupabaseClient,
+  module: string
+): Promise<void> {
+  let botToken: string;
+  let chatId: string;
+  try {
+    botToken = await getSecret(supabase, 'TELEGRAM_BOT_TOKEN');
+    chatId = await getSecret(supabase, 'TELEGRAM_CHAT_ID');
+  } catch {
+    return; // Telegram not configured
+  }
+
+  const message = `⚠️ [Lead Finder Alert]\nAll AI models for module "${module}" are currently exhausted, cooling down, or unavailable.\nLeads will be saved as unscored and retried on the next run.`;
+  await sendTelegramMessage(botToken, chatId, message);
+}
+
+export function isQuietHours(settings: CollectorSettings): boolean {
   if (settings.quietHoursStart === null || settings.quietHoursEnd === null) return false;
   const now = new Date();
   const kolkataHour = parseInt(

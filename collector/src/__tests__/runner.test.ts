@@ -4,41 +4,16 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ─── In-memory Mock Supabase Database ────────────────────────────────────────
 
-interface MockLead {
-  id: string;
-  lead_code: string;
-  dedupe_key: string;
-  scored?: boolean;
-  [key: string]: unknown;
-}
-
-interface MockSearchPlan {
-  id: string;
-  profile_id: string;
-  version: number;
-  approved: boolean;
-  search_profiles?: { module: string };
-  plan: Record<string, unknown>;
-}
-
-interface MockCollectorRun {
+interface CollectorRunRecord {
   new?: number;
-  per_source_results?: Array<{ error_message?: string | null }>;
+  per_source_results?: Array<{ source?: string; error_message?: string }>;
   [key: string]: unknown;
-}
-
-interface UpdateChain {
-  eq: ReturnType<typeof vi.fn>;
-  neq: ReturnType<typeof vi.fn>;
-  is: ReturnType<typeof vi.fn>;
-  lt: ReturnType<typeof vi.fn>;
-  then: (resolve: (res: { error: null }) => void) => void;
 }
 
 function createMockSupabase() {
   let leaseHeld = false;
-  const leads: MockLead[] = [];
-  const searchPlans: MockSearchPlan[] = [
+  const leads: Array<Record<string, unknown>> = [];
+  const searchPlans: Array<Record<string, unknown>> = [
     {
       id: 'plan-web-1',
       profile_id: 'prof-1',
@@ -62,7 +37,7 @@ function createMockSupabase() {
     telegram_bot_token: null,
     telegram_chat_id: null,
   };
-  const collectorRuns: MockCollectorRun[] = [];
+  const collectorRuns: CollectorRunRecord[] = [];
 
   const rpc = vi.fn().mockImplementation((fnName: string) => {
     if (fnName === 'acquire_collector_lock') {
@@ -89,7 +64,7 @@ function createMockSupabase() {
         update: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({ error: null }),
           neq: vi.fn().mockResolvedValue({ error: null }),
-          then: (resolve: (res: { error: null }) => void) => resolve({ error: null }),
+          then: (resolve: (val: unknown) => void) => resolve({ error: null }),
         }),
       };
     }
@@ -131,13 +106,13 @@ function createMockSupabase() {
               }
               return {
                 in: vi.fn().mockImplementation((_c: string, values: string[]) => ({
-                  data: leads.filter((l) => values.includes(l.dedupe_key)),
+                  data: leads.filter((l) => values.includes(l.dedupe_key as string)),
                   error: null,
                 })),
               };
             }),
             in: vi.fn().mockImplementation((_col: string, values: string[]) => {
-              const matched = leads.filter((l) => values.includes(l.dedupe_key));
+              const matched = leads.filter((l) => values.includes(l.dedupe_key as string));
               return Promise.resolve({ data: matched, error: null });
             }),
           };
@@ -145,14 +120,11 @@ function createMockSupabase() {
         insert: vi.fn().mockImplementation((items: Record<string, unknown> | Array<Record<string, unknown>>) => {
           const arr = Array.isArray(items) ? items : [items];
           for (const item of arr) {
-            const dedupeKey = String(item['dedupe_key'] ?? '');
-            const exists = leads.find((l) => l.dedupe_key === dedupeKey);
+            const exists = leads.find((l) => l.dedupe_key === item.dedupe_key);
             if (!exists) {
               leads.push({
                 id: `lead-${leads.length + 1}`,
                 lead_code: `04-11-WEB-000${leads.length + 1}`,
-                dedupe_key: dedupeKey,
-                scored: false,
                 ...item,
               });
             }
@@ -160,7 +132,7 @@ function createMockSupabase() {
           return Promise.resolve({ error: null });
         }),
         update: vi.fn().mockImplementation((patch: Record<string, unknown>) => {
-          const chain: Partial<UpdateChain> = {};
+          const chain: Record<string, unknown> = {};
           chain.eq = vi.fn().mockImplementation((_col: string, val: string) => {
             const lead = leads.find((l) => l.id === val);
             if (lead) Object.assign(lead, patch);
@@ -169,7 +141,7 @@ function createMockSupabase() {
           chain.neq = vi.fn().mockReturnValue(chain);
           chain.is = vi.fn().mockReturnValue(chain);
           chain.lt = vi.fn().mockResolvedValue({ error: null });
-          chain.then = (resolve: (res: { error: null }) => void) => resolve({ error: null });
+          chain.then = (resolve: (val: unknown) => void) => resolve({ error: null });
           return chain;
         }),
         delete: vi.fn().mockReturnValue({
@@ -197,7 +169,7 @@ function createMockSupabase() {
     }
     if (table === 'collector_runs') {
       return {
-        insert: vi.fn().mockImplementation((runData: MockCollectorRun) => {
+        insert: vi.fn().mockImplementation((runData: Record<string, unknown>) => {
           collectorRuns.push(runData);
           return Promise.resolve({ error: null });
         }),

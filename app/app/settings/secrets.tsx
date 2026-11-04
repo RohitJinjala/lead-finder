@@ -87,17 +87,12 @@ export default function SecretsScreen() {
     }, 4000);
   }
 
-  async function handleSaveSecret() {
-    if (!secretName.trim() || !secretValue.trim()) {
-      Alert.alert('Error', 'Please provide both a secret name and a key value.');
-      return;
-    }
-
+  async function executeSaveSecret(name: string) {
     setLoading(true);
     try {
       const { error } = await supabase.functions.invoke('save-secret', {
         body: {
-          name: secretName.trim().toUpperCase(),
+          name,
           value: secretValue.trim(),
           kind: secretKind,
           module: secretModule === 'both' ? null : secretModule,
@@ -110,13 +105,40 @@ export default function SecretsScreen() {
       setSecretName('');
       setSecretValue('');
       await fetchSecrets();
-      showToast(`Saved secret ${secretName}`);
+      showToast(`Saved secret ${name}`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to save secret';
       Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleSaveSecret() {
+    if (!secretName.trim() || !secretValue.trim()) {
+      Alert.alert('Error', 'Please provide both a secret name and a key value.');
+      return;
+    }
+
+    const name = secretName.trim().toUpperCase();
+    const existing = secrets.some((s) => s.name === name);
+
+    if (existing) {
+      Alert.alert(
+        'Replace Secret',
+        `Replace existing secret ${name}? The existing key value will be overwritten.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Replace',
+            onPress: () => void executeSaveSecret(name),
+          },
+        ]
+      );
+      return;
+    }
+
+    void executeSaveSecret(name);
   }
 
   function handleDelete(secret: SecretMeta) {

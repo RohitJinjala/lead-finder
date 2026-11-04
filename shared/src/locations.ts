@@ -220,3 +220,4 @@ export const DEFAULT_NICHE_OFFERS: DefaultNicheOffer[] = [
     enabled: true,
   },
 ];
+

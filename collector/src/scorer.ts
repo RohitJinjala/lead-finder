@@ -3,6 +3,7 @@ import { scoreWithChain, AllModelsFailedError, type RouterDependencies } from '@
 import type { ModelEntry } from '@lead-finder/shared';
 import { getSecret } from './secrets.js';
 import type { CollectorSettings } from './settings.js';
+import { sendModelExhaustionAlert } from './alerts.js';
 
 interface ScoringRunResult {
   scored: number;
@@ -21,6 +22,8 @@ export async function scoreUnscored(
     modelsUsed: {},
     highScoreLeadIds: [],
   };
+
+  const exhaustedModules = new Set<string>();
 
   // Fetch unscored leads (newest first, up to cap)
   const { data: leads, error: leadsError } = await supabase
@@ -117,6 +120,7 @@ export async function scoreUnscored(
       }
     } catch (err) {
       if (err instanceof AllModelsFailedError) {
+        exhaustedModules.add(lead.module);
         result.unscored++;
         await markUnscored(supabase, lead.id);
       } else {
@@ -124,6 +128,14 @@ export async function scoreUnscored(
         result.unscored++;
         await markUnscored(supabase, lead.id);
       }
+    }
+  }
+
+  for (const mod of exhaustedModules) {
+    try {
+      await sendModelExhaustionAlert(supabase, mod);
+    } catch {
+      // Non-fatal
     }
   }
 

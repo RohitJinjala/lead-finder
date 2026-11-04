@@ -161,3 +161,17 @@
 - [x] MORNING_CHECKLIST.md complete
 - [x] DECISIONS.md complete
 
+## Master Prompt Full Compliance Audit & Enhancements
+- [x] Section 11 & 12: Telegram alert formatting in plain text (safe URLs without Markdown entity breaks)
+- [x] Section 12: Automated model exhaustion alert via Telegram when all module models cooldown
+- [x] Section 11: LeadCard full expandable detail view (full description, service match, tech stack chips, history timeline, notes editor with Save Note)
+- [x] Section 11: Approximate local time computation helper `(approx.)` for client country & business local time
+- [x] Section 11: OpenStreetMap map link (`🗺️ OSM Map`) button on Maps leads
+- [x] Section 11: Bulk actions with selection toggle, confirmation dialog listing count/IDs/titles, and 5-second Undo toast
+- [x] Section 11: Deal completion prompt offering "Complete & Mark Paid" and "Mark Complete"
+- [x] Section 11: Replace secret confirmation naming the secret before overwriting
+- [x] Section 6: Lead ID search matching partial and full ID codes
+- [x] 100% tests passing (173/173 tests green across all 3 packages)
+- [x] Clean Expo web build export (22 static routes) & 0 secrets detected in build artifacts
+
+

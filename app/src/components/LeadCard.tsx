@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert, Platform, TextInput } from 'react-native';
 import { useState } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import type { Lead } from '../types/lead';
@@ -7,6 +7,64 @@ import { supabase } from '../lib/supabase';
 interface LeadCardProps {
   lead: Lead;
   onRefresh: () => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
+}
+
+const TIMEZONE_BY_COUNTRY: Record<string, string> = {
+  US: 'America/New_York',
+  USA: 'America/New_York',
+  'United States': 'America/New_York',
+  UK: 'Europe/London',
+  'United Kingdom': 'Europe/London',
+  CA: 'America/Toronto',
+  Canada: 'America/Toronto',
+  AU: 'Australia/Sydney',
+  Australia: 'Australia/Sydney',
+  DE: 'Europe/Berlin',
+  Germany: 'Europe/Berlin',
+  FR: 'Europe/Paris',
+  France: 'Europe/Paris',
+  IN: 'Asia/Kolkata',
+  India: 'Asia/Kolkata',
+  SG: 'Asia/Singapore',
+  Singapore: 'Asia/Singapore',
+  JP: 'Asia/Tokyo',
+  Japan: 'Asia/Tokyo',
+  NL: 'Europe/Amsterdam',
+  Netherlands: 'Europe/Amsterdam',
+  AE: 'Asia/Dubai',
+  UAE: 'Asia/Dubai',
+  'United Arab Emirates': 'Asia/Dubai',
+};
+
+export function getApproxLocalTime(country?: string | null, timezone?: string | null): string | null {
+  try {
+    const tz = timezone || (country ? TIMEZONE_BY_COUNTRY[country.trim()] : null);
+    if (!tz) return null;
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }).format(new Date());
+  } catch {
+    return null;
+  }
+}
+
+function getOsmUrl(lead: Lead): string | null {
+  if (lead.osm_type && lead.osm_id) {
+    return `https://www.openstreetmap.org/${lead.osm_type}/${lead.osm_id}`;
+  }
+  if (lead.lat != null && lead.lon != null) {
+    return `https://www.openstreetmap.org/?mlat=${lead.lat}&mlon=${lead.lon}#map=17/${lead.lat}/${lead.lon}`;
+  }
+  if (lead.business_name && lead.city) {
+    return `https://www.openstreetmap.org/search?query=${encodeURIComponent(`${lead.business_name} ${lead.city}`)}`;
+  }
+  return null;
 }
 
 function getScoreColor(score: number | null, colors: ReturnType<typeof useTheme>['colors']): string {
@@ -26,16 +84,21 @@ function formatRelativeTime(dateStr: string): string {
   return `${days}d ago`;
 }
 
-export function LeadCard({ lead, onRefresh }: LeadCardProps) {
+export function LeadCard({ lead, onRefresh, selectable = false, selected = false, onToggleSelect }: LeadCardProps) {
   const { colors } = useTheme();
+  const [expanded, setExpanded] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [undoTimeout, setUndoTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [showUndo, setShowUndo] = useState(false);
   const [undoAction, setUndoAction] = useState<(() => Promise<void>) | null>(null);
   const [showFollowUpPicker, setShowFollowUpPicker] = useState(false);
   const [toastMessage, setToastMessage] = useState('Action applied');
+  const [notes, setNotes] = useState(lead.notes ?? '');
+  const [savingNotes, setSavingNotes] = useState(false);
 
   const styles = getStyles(colors);
+  const approxTime = getApproxLocalTime(lead.country, lead.timezone);
+  const osmUrl = getOsmUrl(lead);
 
   async function handleAction(newStatus: string, undoFn?: () => Promise<void>) {
     setActionLoading(true);
@@ -147,10 +210,8 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
           onPress: async () => {
             setActionLoading(true);
             try {
-              // 1. Update lead status
               await supabase.from('leads').update({ status: 'won' }).eq('id', lead.id);
 
-              // 2. Insert into deals idempotently
               const clientName = lead.business_name || (lead.module === 'maps' ? 'Local Business' : 'Web Client');
               const { error: dealError } = await supabase.from('deals').upsert(
                 {
@@ -236,6 +297,26 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
     }
   }
 
+  async function handleSaveNotes() {
+    setSavingNotes(true);
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ notes: notes.trim() || null })
+        .eq('id', lead.id);
+      if (error) {
+        Alert.alert('Error', error.message);
+      } else {
+        setToastMessage('Note saved');
+        setShowUndo(true);
+        setTimeout(() => setShowUndo(false), 3000);
+        onRefresh();
+      }
+    } finally {
+      setSavingNotes(false);
+    }
+  }
+
   const scoreColor = getScoreColor(lead.score, colors);
 
   function openUrl(url: string) {
@@ -250,16 +331,43 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
     <View style={styles.card} accessibilityLabel={`Lead ${lead.lead_code}: ${lead.title}`}>
       {/* Header row */}
       <View style={styles.headerRow}>
-        <Text style={styles.leadCode} accessibilityLabel={`Lead code ${lead.lead_code}`}>{lead.lead_code}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: colors.statusBadge[lead.status] }]}>
-          <Text style={styles.statusBadgeText}>{lead.status}</Text>
+        <View style={styles.headerLeft}>
+          {selectable && (
+            <TouchableOpacity
+              style={[styles.checkbox, selected && styles.checkboxSelected]}
+              onPress={onToggleSelect}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: selected }}
+              accessibilityLabel={`Select lead ${lead.lead_code}`}
+            >
+              <Text style={[styles.checkboxText, selected && styles.checkboxTextSelected]}>
+                {selected ? '✓' : ''}
+              </Text>
+            </TouchableOpacity>
+          )}
+          <Text style={styles.leadCode} accessibilityLabel={`Lead code ${lead.lead_code}`}>{lead.lead_code}</Text>
+        </View>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            style={styles.expandButton}
+            onPress={() => setExpanded(!expanded)}
+            accessibilityRole="button"
+            accessibilityLabel={expanded ? `Collapse details for ${lead.lead_code}` : `Expand details for ${lead.lead_code}`}
+          >
+            <Text style={styles.expandButtonText}>{expanded ? '⌃ Details' : '⌄ Details'}</Text>
+          </TouchableOpacity>
+          <View style={[styles.statusBadge, { backgroundColor: colors.statusBadge[lead.status] }]}>
+            <Text style={styles.statusBadgeText}>{lead.status}</Text>
+          </View>
         </View>
       </View>
 
       {/* Title */}
-      <Text style={styles.title} numberOfLines={2} accessibilityLabel={`Title: ${lead.title}`}>
-        {lead.title}
-      </Text>
+      <TouchableOpacity onPress={() => setExpanded(!expanded)} activeOpacity={0.8}>
+        <Text style={styles.title} numberOfLines={expanded ? undefined : 2} accessibilityLabel={`Title: ${lead.title}`}>
+          {lead.title}
+        </Text>
+      </TouchableOpacity>
 
       {/* Score row */}
       <View style={styles.scoreRow}>
@@ -293,11 +401,15 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
         </Text>
       )}
 
-      {/* Module-specific fields */}
+      {/* Module-specific compact / summary fields */}
       {lead.module === 'web' && (
         <View style={styles.metaRow}>
           <Text style={styles.metaText} accessibilityLabel={`Source: ${lead.source}`}>📡 {lead.source}</Text>
-          {lead.country && <Text style={styles.metaText} accessibilityLabel={`Country: ${lead.country}`}>🌍 {lead.country}</Text>}
+          {lead.country && (
+            <Text style={styles.metaText} accessibilityLabel={`Country: ${lead.country}`}>
+              🌍 {lead.country}{approxTime ? ` · 🕒 ${approxTime} (approx.)` : ''}
+            </Text>
+          )}
           {lead.budget_signal !== 'none' && lead.budget_amount && (
             <Text style={styles.metaText} accessibilityLabel={`Budget: ${lead.currency ?? ''} ${lead.budget_amount}`}>
               💰 {lead.currency} {lead.budget_amount}
@@ -311,6 +423,11 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
           <View style={styles.metaRow}>
             <Text style={styles.metaText} accessibilityLabel={`Business: ${lead.business_name ?? ''}`}>🏢 {lead.business_name}</Text>
             {lead.city && <Text style={styles.metaText} accessibilityLabel={`City: ${lead.city}`}>📍 {lead.city}</Text>}
+            {approxTime && (
+              <Text style={styles.metaText} accessibilityLabel={`Business local time: ${approxTime}`}>
+                🕒 {approxTime} (approx.)
+              </Text>
+            )}
             <Text style={styles.attributionText} accessibilityLabel="Found via OpenStreetMap">
               Found via: OpenStreetMap
             </Text>
@@ -385,6 +502,16 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
             >
               <Text style={[styles.socialBtnText, { color: colors.primary }]}>🔍 Verify</Text>
             </TouchableOpacity>
+            {osmUrl && (
+              <TouchableOpacity
+                style={[styles.socialBtn, { backgroundColor: '#7EBA0020' }]}
+                onPress={() => openUrl(osmUrl)}
+                accessibilityRole="link"
+                accessibilityLabel="Open in OpenStreetMap"
+              >
+                <Text style={[styles.socialBtnText, { color: '#4E7E00' }]}>🗺️ OSM Map</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       )}
@@ -425,6 +552,95 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
             accessibilityLabel="Copy draft line"
           >
             <Text style={styles.copyButtonText}>Copy</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* EXPANDED FULL DETAIL SECTION */}
+      {expanded && (
+        <View style={styles.detailSection} accessibilityLabel="Full lead details">
+          {/* Full description */}
+          <Text style={styles.detailHeading}>Full Description:</Text>
+          <Text style={styles.detailBodyText} selectable>{lead.body}</Text>
+
+          {/* Service Match & Tech Stack */}
+          {lead.service_match && (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Service Match:</Text>
+              <Text style={styles.detailValue}>{lead.service_match}</Text>
+            </View>
+          )}
+
+          {lead.tech_stack && lead.tech_stack.length > 0 && (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Tech Stack:</Text>
+              <View style={styles.tagChipsRow}>
+                {lead.tech_stack.map((t) => (
+                  <View key={t} style={styles.techChip}>
+                    <Text style={styles.techChipText}>{t}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {lead.tags && lead.tags.length > 0 && (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Tags:</Text>
+              <View style={styles.tagChipsRow}>
+                {lead.tags.map((tg) => (
+                  <View key={tg} style={styles.tagChip}>
+                    <Text style={styles.tagChipText}>{tg}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {lead.search_profile_id && (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Search Profile:</Text>
+              <Text style={styles.detailValue}>{lead.search_profile_id}</Text>
+            </View>
+          )}
+
+          {/* History timeline */}
+          <Text style={styles.detailHeading}>History Timeline:</Text>
+          <View style={styles.historyContainer}>
+            <Text style={styles.historyItem}>• Found: {new Date(lead.found_at).toLocaleString()}</Text>
+            {lead.posted_at && (
+              <Text style={styles.historyItem}>• Posted: {new Date(lead.posted_at).toLocaleString()}</Text>
+            )}
+            <Text style={styles.historyItem}>
+              • Contacted: {lead.contacted_at ? new Date(lead.contacted_at).toLocaleString() : 'Not contacted yet'}
+            </Text>
+            <Text style={styles.historyItem}>
+              • Follow-up: {lead.follow_up_at ? new Date(lead.follow_up_at).toLocaleDateString() : 'None scheduled'}
+            </Text>
+          </View>
+
+          {/* Notes section with edit & save */}
+          <Text style={styles.detailHeading}>Notes & Observations:</Text>
+          <TextInput
+            style={styles.notesInput}
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="Add internal notes about this lead..."
+            placeholderTextColor={colors.mutedForeground}
+            multiline
+            numberOfLines={3}
+            accessibilityLabel="Lead notes editor"
+          />
+          <TouchableOpacity
+            style={styles.saveNotesButton}
+            onPress={() => void handleSaveNotes()}
+            disabled={savingNotes}
+            accessibilityRole="button"
+            accessibilityLabel="Save lead notes"
+          >
+            <Text style={styles.saveNotesButtonText}>
+              {savingNotes ? 'Saving...' : 'Save Note'}
+            </Text>
           </TouchableOpacity>
         </View>
       )}
@@ -586,6 +802,41 @@ function getStyles(colors: ReturnType<typeof useTheme>['colors']) {
       borderColor: colors.border,
     },
     headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    headerRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    checkbox: {
+      width: 20,
+      height: 20,
+      borderRadius: 4,
+      borderWidth: 1.5,
+      borderColor: colors.mutedForeground,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+    },
+    checkboxSelected: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    checkboxText: {
+      fontSize: 12,
+      color: 'transparent',
+      fontWeight: '700',
+    },
+    checkboxTextSelected: {
+      color: colors.primaryForeground,
+    },
+    expandButton: {
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 6,
+      backgroundColor: colors.muted,
+    },
+    expandButtonText: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
     leadCode: { fontSize: 12, fontWeight: '700', color: colors.mutedForeground, letterSpacing: 0.5 },
     statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
     statusBadgeText: { fontSize: 11, color: '#fff', fontWeight: '600' },
@@ -619,6 +870,101 @@ function getStyles(colors: ReturnType<typeof useTheme>['colors']) {
     draftLine: { fontSize: 13, color: colors.textSecondary, fontStyle: 'italic', flex: 1 },
     copyButton: { paddingHorizontal: 8, paddingVertical: 4, backgroundColor: colors.primary, borderRadius: 4, marginLeft: 8 },
     copyButtonText: { color: colors.primaryForeground, fontSize: 11, fontWeight: '600' },
+    detailSection: {
+      marginTop: 8,
+      paddingTop: 8,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      gap: 6,
+      marginBottom: 8,
+    },
+    detailHeading: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.text,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginTop: 4,
+    },
+    detailBodyText: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      lineHeight: 18,
+    },
+    detailRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      flexWrap: 'wrap',
+    },
+    detailLabel: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    detailValue: {
+      fontSize: 12,
+      color: colors.textSecondary,
+    },
+    tagChipsRow: {
+      flexDirection: 'row',
+      gap: 4,
+      flexWrap: 'wrap',
+    },
+    techChip: {
+      backgroundColor: colors.primary + '18',
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    techChipText: {
+      fontSize: 11,
+      color: colors.primary,
+      fontWeight: '600',
+    },
+    tagChip: {
+      backgroundColor: colors.muted,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    tagChipText: {
+      fontSize: 11,
+      color: colors.textSecondary,
+    },
+    historyContainer: {
+      backgroundColor: colors.muted + '40',
+      borderRadius: 6,
+      padding: 8,
+      gap: 4,
+    },
+    historyItem: {
+      fontSize: 11,
+      color: colors.textSecondary,
+    },
+    notesInput: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 6,
+      padding: 8,
+      fontSize: 13,
+      color: colors.text,
+      backgroundColor: colors.surface,
+      textAlignVertical: 'top',
+    },
+    saveNotesButton: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.primary,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 6,
+      marginTop: 4,
+    },
+    saveNotesButtonText: {
+      color: colors.primaryForeground,
+      fontSize: 12,
+      fontWeight: '600',
+    },
     pickerRow: { flexDirection: 'row', gap: 6, marginBottom: 8, flexWrap: 'wrap' },
     pickerChip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: colors.primary + '20' },
     pickerChipText: { fontSize: 12, fontWeight: '600', color: colors.primary },

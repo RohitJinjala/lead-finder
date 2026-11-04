@@ -71,11 +71,11 @@ export function useLeads(filters: LeadFilters = {}) {
       // Search (ID or text)
       if (filters.search) {
         const s = filters.search.trim();
-        // Check if it looks like a lead code (DD-MM-SRC-NNNN)
+        // Check if it looks like an exact lead code (DD-MM-SRC-NNNN)
         if (/^\d{2}-\d{2}-(WEB|MAP)-\d{4}$/i.test(s)) {
           query = query.eq('lead_code', s.toUpperCase());
         } else {
-          query = query.or(`title.ilike.%${s}%,body.ilike.%${s}%`);
+          query = query.or(`lead_code.ilike.%${s}%,title.ilike.%${s}%,body.ilike.%${s}%`);
         }
       }
 

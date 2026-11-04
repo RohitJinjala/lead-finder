@@ -414,3 +414,4 @@ function getStyles(colors: ReturnType<typeof useTheme>['colors']) {
     outlineButtonText: { color: colors.text, fontSize: 13, fontWeight: '600' },
   });
 }
+
