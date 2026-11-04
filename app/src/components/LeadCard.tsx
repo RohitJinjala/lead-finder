@@ -307,12 +307,85 @@ export function LeadCard({ lead, onRefresh }: LeadCardProps) {
       )}
 
       {lead.module === 'maps' && (
-        <View style={styles.metaRow}>
-          <Text style={styles.metaText} accessibilityLabel={`Business: ${lead.business_name ?? ''}`}>🏢 {lead.business_name}</Text>
-          {lead.city && <Text style={styles.metaText} accessibilityLabel={`City: ${lead.city}`}>📍 {lead.city}</Text>}
-          <Text style={styles.attributionText} accessibilityLabel="Found via OpenStreetMap">
-            Found via: OpenStreetMap
-          </Text>
+        <View style={styles.mapsContainer}>
+          <View style={styles.metaRow}>
+            <Text style={styles.metaText} accessibilityLabel={`Business: ${lead.business_name ?? ''}`}>🏢 {lead.business_name}</Text>
+            {lead.city && <Text style={styles.metaText} accessibilityLabel={`City: ${lead.city}`}>📍 {lead.city}</Text>}
+            <Text style={styles.attributionText} accessibilityLabel="Found via OpenStreetMap">
+              Found via: OpenStreetMap
+            </Text>
+          </View>
+
+          {lead.address && (
+            <Text style={styles.addressText} accessibilityLabel={`Address: ${lead.address}`}>
+              🏠 {lead.address}
+            </Text>
+          )}
+
+          <View style={styles.statusPillsRow}>
+            <View style={[styles.pillBadge, { backgroundColor: lead.website_status === 'none' ? colors.error + '20' : colors.warning + '20' }]}>
+              <Text style={[styles.pillBadgeText, { color: lead.website_status === 'none' ? colors.error : colors.warning }]}>
+                {lead.website_status === 'none' ? '🚫 No Website' : '📱 Social Only'}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.verifiedChip, lead.verified_no_website && styles.verifiedChipActive]}
+              onPress={async () => {
+                await supabase.from('leads').update({ verified_no_website: !lead.verified_no_website }).eq('id', lead.id);
+                onRefresh();
+              }}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: lead.verified_no_website }}
+              accessibilityLabel="I verified no website"
+            >
+              <Text style={[styles.verifiedChipText, lead.verified_no_website && styles.verifiedChipTextActive]}>
+                {lead.verified_no_website ? '✓ Verified No Website' : '☐ I verified no website'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {lead.suggested_offer && (
+            <Text style={styles.suggestedOfferText} accessibilityLabel={`Suggested offer: ${lead.suggested_offer}`}>
+              💡 Suggested: {lead.suggested_offer}
+            </Text>
+          )}
+
+          {/* Social and Verification Search Buttons */}
+          <View style={styles.socialButtonsRow}>
+            <TouchableOpacity
+              style={styles.socialBtn}
+              onPress={() => openUrl(`https://www.google.com/search?q=${encodeURIComponent((lead.business_name || '') + ' ' + (lead.city || '') + ' facebook')}`)}
+              accessibilityRole="link"
+              accessibilityLabel="Find on Facebook"
+            >
+              <Text style={styles.socialBtnText}>FB Search</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.socialBtn}
+              onPress={() => openUrl(`https://www.google.com/search?q=${encodeURIComponent((lead.business_name || '') + ' ' + (lead.city || '') + ' instagram')}`)}
+              accessibilityRole="link"
+              accessibilityLabel="Find on Instagram"
+            >
+              <Text style={styles.socialBtnText}>IG Search</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.socialBtn}
+              onPress={() => openUrl(`https://www.google.com/search?q=${encodeURIComponent((lead.business_name || '') + ' ' + (lead.city || '') + ' linkedin')}`)}
+              accessibilityRole="link"
+              accessibilityLabel="Find on LinkedIn"
+            >
+              <Text style={styles.socialBtnText}>LinkedIn</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.socialBtn, { backgroundColor: colors.primary + '20' }]}
+              onPress={() => openUrl(`https://www.google.com/search?q=${encodeURIComponent((lead.business_name || '') + ' ' + (lead.city || '') + ' official website')}`)}
+              accessibilityRole="link"
+              accessibilityLabel="Verify business on Google"
+            >
+              <Text style={[styles.socialBtnText, { color: colors.primary }]}>🔍 Verify</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -524,6 +597,19 @@ function getStyles(colors: ReturnType<typeof useTheme>['colors']) {
     metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
     metaText: { fontSize: 12, color: colors.textSecondary },
     attributionText: { fontSize: 11, color: colors.mutedForeground, fontStyle: 'italic' },
+    mapsContainer: { gap: 4, marginBottom: 6 },
+    addressText: { fontSize: 12, color: colors.textSecondary },
+    statusPillsRow: { flexDirection: 'row', gap: 8, alignItems: 'center', marginVertical: 4 },
+    pillBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
+    pillBadgeText: { fontSize: 11, fontWeight: '700' },
+    verifiedChip: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.muted },
+    verifiedChipActive: { backgroundColor: colors.success + '20', borderColor: colors.success },
+    verifiedChipText: { fontSize: 11, color: colors.textSecondary },
+    verifiedChipTextActive: { color: colors.success, fontWeight: '700' },
+    suggestedOfferText: { fontSize: 12, color: colors.text, fontStyle: 'italic', backgroundColor: colors.muted, padding: 6, borderRadius: 6, marginVertical: 4 },
+    socialButtonsRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginVertical: 4 },
+    socialBtn: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, backgroundColor: colors.muted },
+    socialBtnText: { fontSize: 11, fontWeight: '600', color: colors.text },
     redFlagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 4 },
     redFlagChip: { backgroundColor: colors.error + '20', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
     redFlagText: { fontSize: 11, color: colors.error },

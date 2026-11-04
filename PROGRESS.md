@@ -114,23 +114,23 @@
 - [x] Git commit: phase 4: workflow
 
 ## Phase 5 — Maps Module
-- [ ] Maps module toggle
-- [ ] Own model chain for Maps
-- [ ] Location data (open countries-states-cities dataset, credited)
-- [ ] Location picker (Country -> State -> City, multi-select, presets)
-- [ ] Niche picker (editable niche_offers)
-- [ ] Overpass API adapter (fair-use limits, caching, backoff)
-- [ ] Maps collector (no-website / social-only filter, phone + social extraction)
-- [ ] Maps scoring (router, Maps chain, draft pitch line)
-- [ ] Maps card (all fields: business name, niche, address, phone, WhatsApp button)
-- [ ] Social search buttons (Find on Facebook/Instagram/LinkedIn)
-- [ ] Verify button + verified checkbox
-- [ ] "Found via: OpenStreetMap" badge + attribution on all Maps screens
-- [ ] Google Places optional adapter (flag + key from Secrets)
-- [ ] Round-robin area selection by last_searched_at
-- [ ] Maps tests: fixture-based, no-website filter, phone extraction
-- [ ] npm run verify green
-- [ ] Git commit: phase 5: maps module
+- [x] Maps module toggle
+- [x] Own model chain for Maps
+- [x] Location data (open countries-states-cities dataset, credited)
+- [x] Location picker (Country -> State -> City, multi-select, presets)
+- [x] Niche picker (editable niche_offers)
+- [x] Overpass API adapter (fair-use limits, caching, backoff)
+- [x] Maps collector (no-website / social-only filter, phone + social extraction)
+- [x] Maps scoring (router, Maps chain, draft pitch line)
+- [x] Maps card (all fields: business name, niche, address, phone, WhatsApp button)
+- [x] Social search buttons (Find on Facebook/Instagram/LinkedIn)
+- [x] Verify button + verified checkbox
+- [x] "Found via: OpenStreetMap" badge + attribution on all Maps screens
+- [x] Google Places optional adapter (flag + key from Secrets)
+- [x] Round-robin area selection by last_searched_at
+- [x] Maps tests: fixture-based, no-website filter, phone extraction
+- [x] npm run verify green
+- [x] Git commit: phase 5: maps module
 
 ## Phase 6 — Analytics and Polish
 - [ ] Analytics SQL views / RPC functions (day buckets, Asia/Kolkata)

@@ -11,7 +11,7 @@
 | Phase 2 — Secrets & Models | 104 | 104 | 0 | 0 | 59 shared (9 edge fn + 18 router + 15 db + 8 schema + 9 utils), 9 collector, 36 app (20 card + 7 auth + 5 secrets + 4 models). verify green. |
 | Phase 3 — Web Collector | 120 | 120 | 0 | 0 | 59 shared, 21 collector (4 runner + 8 sources + 6 filter + 3 alerts), 40 app (4 search profiles + 36 prior). verify green. |
 | Phase 4 — Workflow | 135 | 135 | 0 | 0 | 59 shared, 21 collector, 55 app (4 calendar + 4 deals + 7 data/csv + 40 prior). 19 static routes exported. verify green. |
-| Phase 5 — Maps | — | — | — | — | Not started |
+| Phase 5 — Maps | 151 | 151 | 0 | 0 | 59 shared, 29 collector (8 overpass + 21 prior), 63 app (3 modules + 4 niches + 56 prior). 22 static routes exported. verify green. |
 | Phase 6 — Analytics | — | — | — | — | Not started |
 
 ## What Ran Against Mocks (not real services)

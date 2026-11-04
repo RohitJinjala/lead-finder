@@ -28,5 +28,7 @@ Every decision made autonomously (instead of asking the owner).
 | 22 | Preserving `?id=...` query param in `makeWebDedupeKey` while stripping tracking params | Stripping all query params | Ensures sources like Hacker News that store the post identifier in the query string (`/item?id=...`) generate distinct dedupe keys rather than collapsing to a single key |
 | 23 | Pure React Native month grid with event indicator dots in `calendar.tsx` | Third-party calendar web wrappers | 100% universal rendering across Web, iOS, and Android without bundler polyfills or test mocking overhead |
 | 24 | Cross-platform CSV export: HTML Blob download on Web, React Native `Share.share` on mobile | Web-only anchor tag | Enables seamless data portability on both mobile devices and desktop web browsers |
+| 25 | Built-in open geographical dataset with cascading Country -> State -> City in `locations.ts` | Dynamic multi-megabyte remote runtime downloads | Provides instant, zero-latency cascading area selection with complete offline resilience |
+
 
 

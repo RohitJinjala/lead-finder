@@ -212,12 +212,22 @@ describe('LeadCard — Maps lead', () => {
 
   it('shows city', () => {
     renderWithTheme(<LeadCard lead={baseMapsLead} onRefresh={jest.fn()} />);
-    expect(screen.getByText(/Mumbai/)).toBeTruthy();
+    expect(screen.getAllByText(/Mumbai/).length).toBeGreaterThan(0);
   });
 
   it('renders lead code MAP format', () => {
     renderWithTheme(<LeadCard lead={baseMapsLead} onRefresh={jest.fn()} />);
     expect(screen.getByText('04-11-MAP-0001')).toBeTruthy();
+  });
+
+  it('renders website status, verified checkbox, and social search buttons', () => {
+    renderWithTheme(<LeadCard lead={baseMapsLead} onRefresh={jest.fn()} />);
+    expect(screen.getByText(/No Website/)).toBeTruthy();
+    expect(screen.getByLabelText('I verified no website')).toBeTruthy();
+    expect(screen.getByLabelText('Find on Facebook')).toBeTruthy();
+    expect(screen.getByLabelText('Find on Instagram')).toBeTruthy();
+    expect(screen.getByLabelText('Find on LinkedIn')).toBeTruthy();
+    expect(screen.getByLabelText('Verify business on Google')).toBeTruthy();
   });
 });
 

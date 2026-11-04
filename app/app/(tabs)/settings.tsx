@@ -40,11 +40,14 @@ export default function SettingsScreen() {
   ];
 
   const navLinks: Record<string, string> = {
+    'Modules': '/settings/modules',
     'Secrets & Integrations': '/settings/secrets',
     'Models': '/settings/models',
     'Search Profiles': '/settings/search-profiles',
+    'Locations & Niches': '/settings/niches',
     'Data': '/settings/data',
     'Collector Health': '/settings/collector-health',
+    'About': '/settings/about',
     'Account / Auth': '/auth',
   };
 
