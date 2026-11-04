@@ -8,7 +8,7 @@
 |-------|-----------|--------|--------|---------|-------|
 | Phase 0 — Scaffold | 64 | 64 | 0 | 0 | 35 shared, 9 collector, 20 app. verify green. |
 | Phase 1 — Foundation | 86 | 86 | 0 | 0 | 50 shared (15 db via PGlite), 9 collector, 27 app (7 auth). verify green. |
-| Phase 2 — Secrets & Models | — | — | — | — | Not started |
+| Phase 2 — Secrets & Models | 104 | 104 | 0 | 0 | 59 shared (9 edge fn + 18 router + 15 db + 8 schema + 9 utils), 9 collector, 36 app (20 card + 7 auth + 5 secrets + 4 models). verify green. |
 | Phase 3 — Web Collector | — | — | — | — | Not started |
 | Phase 4 — Workflow | — | — | — | — | Not started |
 | Phase 5 — Maps | — | — | — | — | Not started |

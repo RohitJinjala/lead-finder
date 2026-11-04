@@ -10,3 +10,4 @@ if (fs.existsSync(src) && !fs.existsSync(dest)) {
   fs.cpSync(src, dest, { recursive: true });
   console.log('[patch-ajv] Copied ajv v8 to ajv-keywords/node_modules/ajv');
 }
+

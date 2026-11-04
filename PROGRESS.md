@@ -57,23 +57,23 @@
 - [x] Git commit: phase 1: foundation
 
 ## Phase 2 — Secrets and Models
-- [ ] Supabase Vault / encrypted column design (decision in DECISIONS.md)
-- [ ] secret_meta table (already in migration 001)
-- [ ] Edge Function: save-secret (JWT + owner check, write-only, masked_preview)
-- [ ] Edge Function: delete-secret (JWT + owner check, confirmation)
-- [ ] Edge Function: test-secret (JWT + owner check, provider check, rate limit)
-- [ ] Edge Function: detect-telegram-chat (getUpdates mock, pick chat)
-- [ ] Edge Function: send-telegram-test
-- [ ] Edge Function: generate-plan
-- [ ] Secrets & Integrations screen (all sections from section 3)
-- [ ] model_chain + model_status tables
-- [ ] AI model router (/shared)
-- [ ] Settings > Models screen (add, test, reorder, enable, delete)
-- [ ] Model Dashboard screen
-- [ ] Router tests: all 10+ cases from section 14
-- [ ] Edge Function tests: JWT, non-owner, invalid input, masked output
-- [ ] npm run verify green
-- [ ] Git commit: phase 2: secrets and models
+- [x] Supabase Vault / encrypted column design (decision in DECISIONS.md)
+- [x] secret_meta table (already in migration 001)
+- [x] Edge Function: save-secret (JWT + owner check, write-only, masked_preview)
+- [x] Edge Function: delete-secret (JWT + owner check, confirmation)
+- [x] Edge Function: test-secret (JWT + owner check, provider check, rate limit)
+- [x] Edge Function: detect-telegram-chat (getUpdates mock, pick chat)
+- [x] Edge Function: send-telegram-test
+- [x] Edge Function: generate-plan
+- [x] Secrets & Integrations screen (all sections from section 3)
+- [x] model_chain + model_status tables
+- [x] AI model router (/shared)
+- [x] Settings > Models screen (add, test, reorder, enable, delete)
+- [x] Model Dashboard screen
+- [x] Router tests: all 10+ cases from section 14
+- [x] Edge Function tests: JWT, non-owner, invalid input, masked output
+- [x] npm run verify green
+- [x] Git commit: phase 2: secrets and models
 
 ## Phase 3 — Web Collector and Plans
 - [ ] Collector entry point (single run, lease acquire/release)

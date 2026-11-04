@@ -24,4 +24,5 @@ Every decision made autonomously (instead of asking the owner).
 | 18 | Add role existence initialization in migration 002 | Hard requirement on pre-existing roles | Allows migrations to run cleanly on standalone Postgres, PGlite, and Supabase alike |
 | 19 | Standard schema grants on schema public for `anon` and `authenticated` roles | Manual per-table grants | Matches Supabase PostgREST default architecture where tables are accessible subject to RLS policies |
 | 20 | Explicit `postinstall` script `scripts/patch-ajv.js` for `ajv-keywords` | Custom package hoist | Automatically ensures `ajv` v8 is available to `ajv-keywords` across all package operations |
+| 21 | Write-only secret preview strictly masked (`first 4, last 2`, middle `*`) via `set_secret_value` and `secret_meta` | Storing plain secrets in client state | Prevents any accidental secret leakage in logs, screenshots, UI, or state persistence while still allowing identification |
 

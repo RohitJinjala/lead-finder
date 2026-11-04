@@ -1,9 +1,11 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/hooks/useTheme';
 import type { ThemeMode } from '../../src/types/theme';
 
 export default function SettingsScreen() {
   const { colors, mode, setMode } = useTheme();
+  const router = useRouter();
 
   const themeOptions: Array<{ value: ThemeMode; label: string }> = [
     { value: 'light', label: 'Light' },
@@ -37,6 +39,19 @@ export default function SettingsScreen() {
     'About',
   ];
 
+  const navLinks: Record<string, string> = {
+    'Secrets & Integrations': '/settings/secrets',
+    'Models': '/settings/models',
+    'Account / Auth': '/auth',
+  };
+
+  function handleNav(item: string) {
+    const route = navLinks[item];
+    if (route) {
+      router.push(route as never);
+    }
+  }
+
   return (
     <ScrollView style={styles.container} accessibilityLabel="Settings screen">
       <View style={styles.section}>
@@ -66,6 +81,7 @@ export default function SettingsScreen() {
           <TouchableOpacity
             key={item}
             style={styles.navItem}
+            onPress={() => handleNav(item)}
             accessibilityRole="button"
             accessibilityLabel={item}
           >
