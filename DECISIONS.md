@@ -35,6 +35,8 @@ Every decision made autonomously (instead of asking the owner).
 | 29 | Expandable in-place detail view on LeadCard with history timeline and notes editor | Modal or separate route | Seamless inline expansion keeps scroll position intact while giving immediate access to full body, service match, tech stack, notes editor with Save Note button, and history |
 | 30 | Standard Intl.DateTimeFormat with mapped country-to-timezone dictionary for approximate local time | Heavy moment-timezone or remote geocoding API | Zero external network calls; provides approximate local time with mandatory `(approx.)` label for both Web client countries and Maps local businesses |
 | 31 | Multi-select mode with bulk action confirmation dialog and 5-second Undo toast | Instant deletion without confirmation | Strictly satisfies Section 11 safety requirements: dialog names exact count, lead codes, and titles before applying bulk reject/accept, and gives a 5-second window to reverse |
+| 32 | Retain Expo SDK 52 for Android testing via official Expo Go SDK 52 APK | Forcing SDK 58 upgrade on Node 20 | Expo SDK 58 strictly requires Node.js >= 22.13 and React 19.3 / RN 0.88; the host environment is Node 20 LTS. On Android, Expo provides official versioned Expo Go APKs (https://expo.dev/go?sdkVersion=52&platform=android&device=true) which run SDK 52 natively. |
+
 
 
 
