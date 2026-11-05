@@ -17,7 +17,6 @@
     "@expo/vector-icons": "~14.0.4",
     "@lead-finder/shared": "file:../shared",
     "@react-native-async-storage/async-storage": "1.23.1",
-    "@react-navigation/native": "^7.0.14",
     "@supabase/supabase-js": "2.46.2",
     "expo": "~52.0.11",
     "expo-constants": "~17.0.3",
