@@ -22,7 +22,7 @@ export default function TabLayout() {
           title: 'Leads',
           tabBarAccessibilityLabel: 'Leads tab',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="list" size={size} color={color} accessibilityLabel="Leads" />
+            <Ionicons name="list" size={size} color={String(color)} accessibilityLabel="Leads" />
           ),
         }}
       />
@@ -32,7 +32,7 @@ export default function TabLayout() {
           title: 'Calendar',
           tabBarAccessibilityLabel: 'Calendar tab',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar" size={size} color={color} accessibilityLabel="Calendar" />
+            <Ionicons name="calendar" size={size} color={String(color)} accessibilityLabel="Calendar" />
           ),
         }}
       />
@@ -42,7 +42,7 @@ export default function TabLayout() {
           title: 'Deals',
           tabBarAccessibilityLabel: 'Deals tab',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="briefcase" size={size} color={color} accessibilityLabel="Deals" />
+            <Ionicons name="briefcase" size={size} color={String(color)} accessibilityLabel="Deals" />
           ),
         }}
       />
@@ -52,7 +52,7 @@ export default function TabLayout() {
           title: 'Analytics',
           tabBarAccessibilityLabel: 'Analytics tab',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bar-chart" size={size} color={color} accessibilityLabel="Analytics" />
+            <Ionicons name="bar-chart" size={size} color={String(color)} accessibilityLabel="Analytics" />
           ),
         }}
       />
@@ -62,7 +62,7 @@ export default function TabLayout() {
           title: 'Settings',
           tabBarAccessibilityLabel: 'Settings tab',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings" size={size} color={color} accessibilityLabel="Settings" />
+            <Ionicons name="settings" size={size} color={String(color)} accessibilityLabel="Settings" />
           ),
         }}
       />

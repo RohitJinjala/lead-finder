@@ -120,7 +120,7 @@ describe('DataScreen & CSV Export', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(Alert, 'alert');
-    jest.spyOn(Share, 'share').mockResolvedValue({ action: Share.sharedAction });
+    jest.spyOn(Share, 'share').mockResolvedValue({ action: Share.sharedAction, activityType: undefined });
   });
 
   describe('CSV Serializers', () => {

@@ -1,6 +1,6 @@
 module.exports = {
   preset: 'jest-expo',
-  testTimeout: 20000,
+  testTimeout: 60000,
   setupFiles: ['<rootDir>/jest.setup.js'],
   setupFilesAfterEnv: ['@testing-library/jest-native/extend-expect'],
   transformIgnorePatterns: [

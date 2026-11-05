@@ -14,6 +14,7 @@
 | Phase 5 — Maps | 151 | 151 | 0 | 0 | 59 shared, 29 collector (8 overpass + 21 prior), 63 app (3 modules + 4 niches + 56 prior). 22 static routes exported. verify green. |
 | Phase 6 — Analytics | 167 | 167 | 0 | 0 | 67 shared (8 analytics + 59 prior), 30 collector (1 cleanup + 29 prior), 70 app (5 analytics + 2 notifications + 63 prior). 22 static routes exported. verify green. |
 | Master Prompt Compliance Pass | 173 | 173 | 0 | 0 | 67 shared, 31 collector (+1 model exhaustion alert), 75 app (+4 lead card detail/time/osm/bulk + 1 secret replace confirm). 22 static routes exported. verify green. |
+| Expo SDK 58 Upgrade | 173 | 173 | 0 | 0 | Upgraded to Expo SDK 58, React Native 0.88.1, React 19.3.0, Jest 30. All 173 tests pass (67 shared, 31 collector, 75 app). 22 static web routes exported. 0 secrets found. |
 
 ## What Ran Against Mocks (not real services)
 

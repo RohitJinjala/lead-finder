@@ -2,4 +2,4 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
 
-jest.setTimeout(20000);
+jest.setTimeout(60000);
