@@ -13,14 +13,28 @@ import {
   type DealAnalyticsItem,
 } from '../analytics.js';
 
+// Helpers: generate dates relative to now so tests never go stale
+function daysAgo(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  d.setHours(10, 0, 0, 0);
+  return d.toISOString();
+}
+function daysAgoAt(n: number, h: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  d.setHours(h, 0, 0, 0);
+  return d.toISOString();
+}
+
 describe('analytics module', () => {
   const mockLeads: LeadAnalyticsItem[] = [
     {
       id: '1',
-      lead_code: '04-11-WEB-0001',
+      lead_code: 'WEB-0001',
       module: 'web',
       source: 'hackernews',
-      found_at: '2026-11-04T10:00:00.000Z',
+      found_at: daysAgo(1),
       status: 'new',
       scored: true,
       score: 85,
@@ -29,10 +43,10 @@ describe('analytics module', () => {
     },
     {
       id: '2',
-      lead_code: '04-11-WEB-0002',
+      lead_code: 'WEB-0002',
       module: 'web',
       source: 'reddit',
-      found_at: '2026-11-04T11:00:00.000Z',
+      found_at: daysAgoAt(1, 11),
       status: 'acceptable',
       scored: true,
       score: 72,
@@ -41,10 +55,10 @@ describe('analytics module', () => {
     },
     {
       id: '3',
-      lead_code: '04-11-MAP-0001',
+      lead_code: 'MAP-0001',
       module: 'maps',
       source: 'overpass',
-      found_at: '2026-11-03T10:00:00.000Z',
+      found_at: daysAgo(2),
       status: 'contacted',
       scored: true,
       score: 65,
@@ -53,10 +67,10 @@ describe('analytics module', () => {
     },
     {
       id: '4',
-      lead_code: '04-11-MAP-0002',
+      lead_code: 'MAP-0002',
       module: 'maps',
       source: 'overpass',
-      found_at: '2026-11-03T12:00:00.000Z',
+      found_at: daysAgoAt(2, 12),
       status: 'won',
       scored: true,
       score: 95,
@@ -65,10 +79,10 @@ describe('analytics module', () => {
     },
     {
       id: '5',
-      lead_code: '04-11-WEB-0003',
+      lead_code: 'WEB-0003',
       module: 'web',
       source: 'hackernews',
-      found_at: '2026-11-02T10:00:00.000Z',
+      found_at: daysAgo(3),
       status: 'rejected',
       reject_reason: 'low budget',
       scored: true,
@@ -78,37 +92,37 @@ describe('analytics module', () => {
     },
     {
       id: '6',
-      lead_code: '04-11-WEB-0004',
+      lead_code: 'WEB-0004',
       module: 'web',
       source: 'remoteok',
-      found_at: '2026-11-01T10:00:00.000Z',
+      found_at: daysAgo(5),
       status: 'new',
       scored: false,
       score: null,
       country: null,
       niche: null,
-      deleted_at: '2026-11-04T00:00:00.000Z', // deleted, should be excluded
+      deleted_at: daysAgo(4), // deleted, should be excluded
     },
   ];
 
   const mockDeals: DealAnalyticsItem[] = [
     {
       id: 'd1',
-      lead_code: '04-11-MAP-0002',
+      lead_code: 'MAP-0002',
       value: 1500,
       currency: 'USD',
       payment_status: 'paid',
       completed: true,
-      created_at: '2026-11-03T14:00:00.000Z',
+      created_at: daysAgoAt(2, 14),
     },
     {
       id: 'd2',
-      lead_code: '04-11-WEB-0002',
+      lead_code: 'WEB-0002',
       value: 3000,
       currency: 'USD',
       payment_status: 'unpaid',
       completed: false,
-      created_at: '2026-11-04T12:00:00.000Z',
+      created_at: daysAgoAt(1, 12),
     },
   ];
 

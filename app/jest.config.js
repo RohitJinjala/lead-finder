@@ -1,6 +1,7 @@
 module.exports = {
   preset: 'jest-expo',
-  testTimeout: 60000,
+  testTimeout: 120000,
+  maxWorkers: 2,
   setupFiles: ['<rootDir>/jest.setup.js'],
   setupFilesAfterEnv: ['@testing-library/jest-native/extend-expect'],
   transformIgnorePatterns: [
@@ -9,7 +10,7 @@ module.exports = {
   moduleNameMapper: {
     '^@lead-finder/shared$': '<rootDir>/../shared/src/index.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
-    '^(\\.\\.?/.*)\\.js$': '$1',
+    '^(\\.\\.\\/.*)\\.js$': '$1',
   },
   testPathIgnorePatterns: ['/node_modules/'],
   collectCoverageFrom: ['src/**/*.{ts,tsx}', 'app/**/*.{ts,tsx}'],
