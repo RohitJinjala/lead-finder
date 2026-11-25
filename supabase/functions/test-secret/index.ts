@@ -50,7 +50,8 @@ serve(async (req) => {
     } else if (test_type === 'ai_model' && base_url && model_id) {
       // Test OpenAI-compatible endpoint with tiny 1-token prompt
       try {
-        const aiRes = await fetch(`${base_url}/chat/completions`, {
+        const cleanBaseUrl = String(base_url).trim().replace(/\/+$/, '');
+        const aiRes = await fetch(`${cleanBaseUrl}/chat/completions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -71,7 +72,14 @@ serve(async (req) => {
           message = 'HTTP 429: Rate limited';
         } else if (!aiRes.ok) {
           status = 'invalid';
-          message = `HTTP ${aiRes.status}`;
+          let detail = '';
+          try {
+            const errBody = await aiRes.json();
+            detail = errBody?.error?.message ? `: ${String(errBody.error.message).slice(0, 120)}` : '';
+          } catch {
+            // ignore non-json error body
+          }
+          message = `HTTP ${aiRes.status}${detail}`;
         }
       } catch (e) {
         status = 'invalid';

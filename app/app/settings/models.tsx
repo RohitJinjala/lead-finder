@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../../src/hooks/useTheme';
 import { supabase } from '../../src/lib/supabase';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 interface ModelItem {
   id: string;
@@ -28,21 +28,78 @@ interface ModelItem {
   reset_hour: number;
 }
 
-const PROVIDER_PRESETS: Record<string, { base_url: string; default_model: string }> = {
-  groq: { base_url: 'https://api.groq.com/openai/v1', default_model: 'llama-3.3-70b-versatile' },
-  gemini: { base_url: 'https://generativelanguage.googleapis.com/v1beta/openai', default_model: 'gemini-1.5-flash' },
-  nvidia: { base_url: 'https://integrate.api.nvidia.com/v1', default_model: 'meta/llama-3.1-70b-instruct' },
-  mistral: { base_url: 'https://api.mistral.ai/v1', default_model: 'mistral-small-latest' },
-  openrouter: { base_url: 'https://openrouter.ai/api/v1', default_model: 'anthropic/claude-3.5-haiku' },
-  custom: { base_url: '', default_model: '' },
+interface SecretOption {
+  name: string;
+  masked_preview: string;
+  status: string;
+}
+
+const PROVIDER_PRESETS: Record<string, { base_url: string; default_model: string; default_secret: string }> = {
+  groq: {
+    base_url: 'https://api.groq.com/openai/v1',
+    default_model: 'llama-3.3-70b-versatile',
+    default_secret: 'GROQ_API_KEY',
+  },
+  gemini: {
+    base_url: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    default_model: 'gemini-2.5-flash',
+    default_secret: 'GEMINI_API_KEY',
+  },
+  nvidia: {
+    base_url: 'https://integrate.api.nvidia.com/v1',
+    default_model: 'meta/llama-3.1-70b-instruct',
+    default_secret: 'NVIDIA_API_KEY',
+  },
+  mistral: {
+    base_url: 'https://api.mistral.ai/v1',
+    default_model: 'mistral-small-latest',
+    default_secret: 'MISTRAL_API_KEY',
+  },
+  openrouter: {
+    base_url: 'https://openrouter.ai/api/v1',
+    default_model: 'anthropic/claude-3.5-haiku',
+    default_secret: 'OPENROUTER_API_KEY',
+  },
+  custom: {
+    base_url: '',
+    default_model: '',
+    default_secret: 'CUSTOM_API_KEY',
+  },
 };
+
+function getErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (err && typeof err === 'object' && 'message' in err) {
+    const msg = (err as { message?: unknown }).message;
+    if (typeof msg === 'string' && msg.trim().length > 0) return msg;
+  }
+  return fallback;
+}
+
+function looksLikeRawApiKey(val: string): boolean {
+  const trimmed = val.trim();
+  return (
+    trimmed.startsWith('sk-') ||
+    trimmed.startsWith('gsk_') ||
+    trimmed.startsWith('AIza') ||
+    trimmed.startsWith('nvapi-') ||
+    trimmed.length > 40
+  );
+}
 
 export default function ModelsScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const [selectedModule, setSelectedModule] = useState<'web' | 'maps'>('web');
+  const params = useLocalSearchParams<{ module?: string }>();
+  const initialModule = params.module === 'maps' ? 'maps' : 'web';
+
+  const [selectedModule, setSelectedModule] = useState<'web' | 'maps'>(initialModule);
   const [models, setModels] = useState<ModelItem[]>([]);
+  const [savedSecrets, setSavedSecrets] = useState<SecretOption[]>([]);
   const [loading, setLoading] = useState(false);
+  const [testingForm, setTestingForm] = useState(false);
+  const [testingModelId, setTestingModelId] = useState<string | null>(null);
+  const [formTestResult, setFormTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
 
   // Form State
@@ -50,11 +107,13 @@ export default function ModelsScreen() {
   const [provider, setProvider] = useState('groq');
   const [baseUrl, setBaseUrl] = useState(PROVIDER_PRESETS['groq']?.base_url ?? '');
   const [modelId, setModelId] = useState(PROVIDER_PRESETS['groq']?.default_model ?? '');
-  const [secretName, setSecretName] = useState('GROQ_API_KEY');
+  const [secretName, setSecretName] = useState(PROVIDER_PRESETS['groq']?.default_secret ?? 'GROQ_API_KEY');
+  const [apiKey, setApiKey] = useState('');
   const [dailyLimit, setDailyLimit] = useState('');
 
   useEffect(() => {
     fetchModels();
+    fetchSavedSecrets();
   }, [selectedModule]);
 
   async function fetchModels() {
@@ -74,33 +133,153 @@ export default function ModelsScreen() {
     }
   }
 
+  async function fetchSavedSecrets() {
+    try {
+      const { data, error } = await supabase
+        .from('secret_meta')
+        .select('name, masked_preview, status')
+        .order('name');
+      if (!error && data) {
+        setSavedSecrets((data as SecretOption[]).filter((s) => !s.name.includes('TELEGRAM')));
+      }
+    } catch {
+      // Ignore if offline or mocked
+    }
+  }
+
   function handleProviderSelect(prov: string) {
     setProvider(prov);
+    setFormTestResult(null);
     const preset = PROVIDER_PRESETS[prov];
     if (preset) {
       if (prov !== 'custom') {
         setBaseUrl(preset.base_url);
         setModelId(preset.default_model);
       }
+      setSecretName(preset.default_secret);
+    }
+  }
+
+  async function handleTestFormModel() {
+    const cleanBaseUrl = baseUrl.trim().replace(/\/+$/, '');
+    const cleanModelId = modelId.trim();
+    const cleanSecretName = secretName.trim().toUpperCase();
+    const cleanApiKey = apiKey.trim();
+
+    if (!cleanBaseUrl || !cleanModelId) {
+      Alert.alert('Missing Info', 'Enter Base URL and Model Name first.');
+      return;
+    }
+
+    if (!cleanApiKey && !cleanSecretName) {
+      Alert.alert('Missing API Key', 'Paste an API Key or select a saved Secret Name to test.');
+      return;
+    }
+
+    setTestingForm(true);
+    setFormTestResult(null);
+    try {
+      if (cleanApiKey) {
+        // Direct 1-token OpenAI-compatible test with the pasted API key (not stored in plain text)
+        const res = await fetch(`${cleanBaseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${cleanApiKey}`,
+          },
+          body: JSON.stringify({
+            model: cleanModelId,
+            messages: [{ role: 'user', content: 'hi' }],
+            max_tokens: 1,
+          }),
+        });
+
+        if (res.ok) {
+          setFormTestResult({ ok: true, message: `Working! ${cleanModelId} responded (HTTP ${res.status}).` });
+        } else if (res.status === 401 || res.status === 403) {
+          setFormTestResult({ ok: false, message: `Invalid API Key (HTTP ${res.status}).` });
+        } else if (res.status === 429) {
+          setFormTestResult({ ok: false, message: 'Rate limited (HTTP 429). Key is valid, quota reached.' });
+        } else {
+          let detail = '';
+          try {
+            const errJson = await res.json();
+            detail = errJson?.error?.message ? `: ${String(errJson.error.message).slice(0, 120)}` : '';
+          } catch {
+            // ignore
+          }
+          setFormTestResult({ ok: false, message: `Failed (HTTP ${res.status})${detail}` });
+        }
+      } else {
+        // Test using already-saved secret via Edge Function
+        const { data, error } = await supabase.functions.invoke('test-secret', {
+          body: {
+            name: cleanSecretName,
+            test_type: 'ai_model',
+            base_url: cleanBaseUrl,
+            model_id: cleanModelId,
+          },
+        });
+        if (error) throw error;
+        const ok = data?.status === 'valid';
+        setFormTestResult({
+          ok,
+          message: `${ok ? 'Working!' : 'Failed:'} ${data?.status ?? 'unknown'} — ${data?.message ?? ''}`,
+        });
+      }
+    } catch (err: unknown) {
+      setFormTestResult({
+        ok: false,
+        message: getErrorMessage(err, 'Network or endpoint error while testing model.'),
+      });
+    } finally {
+      setTestingForm(false);
     }
   }
 
   async function handleAddModel() {
-    if (!name.trim() || !baseUrl.trim() || !modelId.trim() || !secretName.trim()) {
-      Alert.alert('Error', 'Please fill in all required model fields.');
+    const cleanName = name.trim();
+    const cleanBaseUrl = baseUrl.trim().replace(/\/+$/, '');
+    const cleanModelId = modelId.trim();
+    const cleanSecretName = secretName.trim().toUpperCase();
+    const cleanApiKey = apiKey.trim();
+
+    if (!cleanName || !cleanBaseUrl || !cleanModelId || !cleanSecretName) {
+      Alert.alert('Error', 'Please fill in Friendly Name, Base URL, Model Name, and Secret Name.');
+      return;
+    }
+
+    if (looksLikeRawApiKey(cleanSecretName)) {
+      Alert.alert(
+        'Check Secret Name',
+        'It looks like you pasted your API key into "Secret Name". Put a short name like GROQ_API_KEY in Secret Name, and paste the actual key in the "API Key" box below.'
+      );
       return;
     }
 
     setLoading(true);
     try {
+      // If user pasted an API key directly in the form, save it securely first
+      if (cleanApiKey) {
+        const { error: secretErr } = await supabase.functions.invoke('save-secret', {
+          body: {
+            name: cleanSecretName,
+            value: cleanApiKey,
+            kind: 'api_key',
+            module: selectedModule,
+          },
+        });
+        if (secretErr) throw secretErr;
+      }
+
       const nextPriority = models.length > 0 ? Math.max(...models.map((m) => m.priority)) + 1 : 1;
       const { error } = await supabase.from('model_chain').insert({
         module: selectedModule,
-        name: name.trim(),
+        name: cleanName,
         provider,
-        base_url: baseUrl.trim(),
-        model_id: modelId.trim(),
-        secret_name: secretName.trim().toUpperCase(),
+        base_url: cleanBaseUrl,
+        model_id: cleanModelId,
+        secret_name: cleanSecretName,
         priority: nextPriority,
         enabled: true,
         daily_limit: dailyLimit ? parseInt(dailyLimit, 10) : null,
@@ -111,10 +290,14 @@ export default function ModelsScreen() {
       if (error) throw error;
       setShowAddForm(false);
       setName('');
+      setApiKey('');
       setDailyLimit('');
+      setFormTestResult(null);
       await fetchModels();
+      await fetchSavedSecrets();
+      Alert.alert('Saved', `${cleanName} added to ${selectedModule} chain.`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to add model';
+      const msg = getErrorMessage(err, 'Failed to add model');
       Alert.alert('Error', msg);
     } finally {
       setLoading(false);
@@ -129,8 +312,8 @@ export default function ModelsScreen() {
         .eq('id', model.id);
       if (error) throw error;
       await fetchModels();
-    } catch {
-      // Ignore
+    } catch (err: unknown) {
+      Alert.alert('Error', getErrorMessage(err, 'Failed to update model status'));
     }
   }
 
@@ -149,8 +332,8 @@ export default function ModelsScreen() {
       await supabase.from('model_chain').update({ priority: targetPriority }).eq('id', currentModel.id);
       await supabase.from('model_chain').update({ priority: currentPriority }).eq('id', targetModel.id);
       await fetchModels();
-    } catch {
-      // Ignore
+    } catch (err: unknown) {
+      Alert.alert('Error', getErrorMessage(err, 'Failed to reorder models'));
     }
   }
 
@@ -162,10 +345,11 @@ export default function ModelsScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            await supabase.from('model_chain').delete().eq('id', model.id);
+            const { error } = await supabase.from('model_chain').delete().eq('id', model.id);
+            if (error) throw error;
             await fetchModels();
-          } catch {
-            // Ignore
+          } catch (err: unknown) {
+            Alert.alert('Error', getErrorMessage(err, 'Failed to delete model'));
           }
         },
       },
@@ -173,21 +357,27 @@ export default function ModelsScreen() {
   }
 
   async function handleTestModel(model: ModelItem) {
-    Alert.alert('Testing Model', `Sent test request to ${model.name}...`);
+    setTestingModelId(model.id);
     try {
       const { data, error } = await supabase.functions.invoke('test-secret', {
         body: {
           name: model.secret_name,
           test_type: 'ai_model',
-          base_url: model.base_url,
+          base_url: model.base_url.replace(/\/+$/, ''),
           model_id: model.model_id,
         },
       });
       if (error) throw error;
-      Alert.alert('Result', `Status: ${data?.status}\n${data?.message ?? 'OK'}`);
+      const isOk = data?.status === 'valid';
+      Alert.alert(
+        isOk ? 'Model Working ✅' : 'Model Check Failed ❌',
+        `Model: ${model.model_id}\nSecret: ${model.secret_name}\nStatus: ${data?.status ?? 'unknown'}\n${data?.message ?? ''}`
+      );
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Test failed';
-      Alert.alert('Error', msg);
+      const msg = getErrorMessage(err, 'Test failed. Check that the secret exists and Edge Functions are deployed.');
+      Alert.alert('Test Failed ❌', msg);
+    } finally {
+      setTestingModelId(null);
     }
   }
 
@@ -196,7 +386,7 @@ export default function ModelsScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.topRow}>
-        <View>
+        <View style={{ flex: 1, marginRight: 8 }}>
           <Text style={styles.screenTitle}>AI Model Chain</Text>
           <Text style={styles.screenSubtitle}>
             Prioritized chain with automatic fallback and cooldown management.
@@ -278,37 +468,78 @@ export default function ModelsScreen() {
             accessibilityLabel="Model Friendly Name"
           />
 
-          <Text style={styles.formLabel}>Base URL</Text>
+          <Text style={styles.formLabel}>Base URL (OpenAI-compatible endpoint)</Text>
           <TextInput
             style={styles.input}
             value={baseUrl}
-            onChangeText={setBaseUrl}
-            placeholder="https://api.provider.com/v1"
+            onChangeText={(val) => {
+              setBaseUrl(val);
+              setFormTestResult(null);
+            }}
+            placeholder="https://api.groq.com/openai/v1"
             placeholderTextColor={colors.mutedForeground}
             autoCapitalize="none"
             accessibilityLabel="Base URL"
           />
 
-          <Text style={styles.formLabel}>Model ID</Text>
+          <Text style={styles.formLabel}>Model Name (Exact model string for API)</Text>
           <TextInput
             style={styles.input}
             value={modelId}
-            onChangeText={setModelId}
-            placeholder="model-identifier"
+            onChangeText={(val) => {
+              setModelId(val);
+              setFormTestResult(null);
+            }}
+            placeholder="e.g. llama-3.3-70b-versatile or gemini-2.5-flash"
             placeholderTextColor={colors.mutedForeground}
             autoCapitalize="none"
             accessibilityLabel="Model ID"
           />
 
-          <Text style={styles.formLabel}>Secret Name (from Secrets)</Text>
+          <Text style={styles.formLabel}>Secret Name (Key Label in Vault)</Text>
+          {savedSecrets.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.presetRow}>
+              {savedSecrets.map((s) => (
+                <TouchableOpacity
+                  key={s.name}
+                  style={[styles.presetChip, secretName.toUpperCase() === s.name && styles.presetChipActive]}
+                  onPress={() => setSecretName(s.name)}
+                >
+                  <Text
+                    style={[
+                      styles.presetChipText,
+                      secretName.toUpperCase() === s.name && styles.presetChipTextActive,
+                    ]}
+                  >
+                    {s.name} ({s.masked_preview})
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
           <TextInput
             style={styles.input}
             value={secretName}
             onChangeText={setSecretName}
-            placeholder="PROVIDER_API_KEY"
+            placeholder="e.g. GROQ_API_KEY"
             placeholderTextColor={colors.mutedForeground}
             autoCapitalize="characters"
             accessibilityLabel="Secret Name"
+          />
+
+          <Text style={styles.formLabel}>API Key (Paste key to save securely, or leave blank if already saved)</Text>
+          <TextInput
+            style={styles.input}
+            value={apiKey}
+            onChangeText={(val) => {
+              setApiKey(val);
+              setFormTestResult(null);
+            }}
+            placeholder="Paste API key here (write-only)"
+            placeholderTextColor={colors.mutedForeground}
+            secureTextEntry
+            autoCapitalize="none"
+            accessibilityLabel="API Key"
           />
 
           <Text style={styles.formLabel}>Daily Request Limit (optional)</Text>
@@ -322,15 +553,37 @@ export default function ModelsScreen() {
             accessibilityLabel="Daily Request Limit"
           />
 
-          <TouchableOpacity
-            style={styles.saveButton}
-            onPress={handleAddModel}
-            disabled={loading}
-            accessibilityRole="button"
-            accessibilityLabel="Save Model"
-          >
-            <Text style={styles.saveButtonText}>Add Model to Chain</Text>
-          </TouchableOpacity>
+          {formTestResult && (
+            <View style={[styles.testBanner, formTestResult.ok ? styles.testBannerOk : styles.testBannerErr]}>
+              <Text style={formTestResult.ok ? styles.testTextOk : styles.testTextErr}>
+                {formTestResult.message}
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.formActionRow}>
+            <TouchableOpacity
+              style={styles.testFormButton}
+              onPress={handleTestFormModel}
+              disabled={testingForm || loading}
+              accessibilityRole="button"
+              accessibilityLabel="Test Model Configuration"
+            >
+              <Text style={styles.testFormButtonText}>
+                {testingForm ? 'Testing...' : '🧪 Test Model'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.saveButton, { flex: 1 }]}
+              onPress={handleAddModel}
+              disabled={loading || testingForm}
+              accessibilityRole="button"
+              accessibilityLabel="Save Model"
+            >
+              <Text style={styles.saveButtonText}>Add Model to Chain</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -389,10 +642,13 @@ export default function ModelsScreen() {
                 <TouchableOpacity
                   style={styles.actionButton}
                   onPress={() => handleTestModel(m)}
+                  disabled={testingModelId === m.id}
                   accessibilityRole="button"
                   accessibilityLabel={`Test ${m.name}`}
                 >
-                  <Text style={styles.actionText}>Test</Text>
+                  <Text style={styles.actionText}>
+                    {testingModelId === m.id ? 'Testing...' : 'Test Model'}
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -476,12 +732,35 @@ function getStyles(colors: ReturnType<typeof useTheme>['colors']) {
       color: colors.text,
       fontSize: 13,
     },
+    testBanner: {
+      borderRadius: 6,
+      padding: 10,
+      marginTop: 2,
+    },
+    testBannerOk: { backgroundColor: '#dcfce7' },
+    testBannerErr: { backgroundColor: '#fee2e2' },
+    testTextOk: { color: '#166534', fontSize: 12, fontWeight: '600' },
+    testTextErr: { color: '#b91c1c', fontSize: 12, fontWeight: '600' },
+    formActionRow: {
+      flexDirection: 'row',
+      gap: 8,
+      marginTop: 4,
+    },
+    testFormButton: {
+      backgroundColor: colors.muted,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    testFormButtonText: { color: colors.text, fontSize: 13, fontWeight: '600' },
     saveButton: {
       backgroundColor: colors.primary,
       paddingVertical: 10,
       borderRadius: 6,
       alignItems: 'center',
-      marginTop: 4,
+      justifyContent: 'center',
     },
     saveButtonText: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
     emptyCard: {

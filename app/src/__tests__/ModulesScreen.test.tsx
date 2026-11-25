@@ -18,7 +18,7 @@ jest.mock('../lib/supabase', () => {
       return {
         select: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+        maybeSingle: jest.fn().mockResolvedValue({
           data: {
             id: 'settings-1',
             web_module_enabled: true,
@@ -29,7 +29,20 @@ jest.mock('../lib/supabase', () => {
           error: null,
         }),
         update: jest.fn().mockReturnValue({
-          neq: jest.fn().mockResolvedValue({ error: null }),
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockResolvedValue({
+              data: [{ id: 'settings-1' }],
+              error: null,
+            }),
+          }),
+        }),
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: { id: 'settings-1' },
+              error: null,
+            }),
+          }),
         }),
       };
     }
@@ -88,7 +101,9 @@ describe('ModulesScreen', () => {
     const webSwitch = screen.getByLabelText('Toggle Web Leads Module');
     fireEvent(webSwitch, 'valueChange', false);
 
-    expect(supabase.from).toHaveBeenCalledWith('user_settings');
+    await waitFor(() => {
+      expect(supabase.from).toHaveBeenCalledWith('user_settings');
+    });
   });
 
   it('allows changing scoring cap per run', async () => {
@@ -101,6 +116,8 @@ describe('ModulesScreen', () => {
     const cap60 = screen.getByLabelText('Set cap to 60 leads');
     fireEvent.press(cap60);
 
-    expect(supabase.from).toHaveBeenCalledWith('user_settings');
+    await waitFor(() => {
+      expect(supabase.from).toHaveBeenCalledWith('user_settings');
+    });
   });
 });
