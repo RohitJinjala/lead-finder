@@ -35,6 +35,7 @@ export default function SecretsScreen() {
   const [showAddForm, setShowAddForm] = useState(false);
 
   // Telegram Specific
+  const [telegramBotToken, setTelegramBotToken] = useState('');
   const [telegramChatId, setTelegramChatId] = useState('');
   const [detectedChats, setDetectedChats] = useState<Array<{ id: string; title?: string; username?: string }>>([]);
   const [alertThreshold, setAlertThreshold] = useState('75');
@@ -193,16 +194,96 @@ export default function SecretsScreen() {
     }
   }
 
+  async function handleSaveTelegramConfig() {
+    const cleanToken = telegramBotToken.trim();
+    const cleanChatId = telegramChatId.trim();
+    const hasSavedToken = secrets.some((s) => s.name === 'TELEGRAM_BOT_TOKEN');
+    const hasSavedChat = secrets.some((s) => s.name === 'TELEGRAM_CHAT_ID');
+
+    if (!cleanToken && !hasSavedToken) {
+      Alert.alert('Missing Bot Token', 'Paste your Telegram Bot Token from @BotFather first.');
+      return;
+    }
+    if (!cleanChatId && !hasSavedChat) {
+      Alert.alert('Missing Chat ID', 'Enter your Telegram Chat ID (or tap Detect Chat after saving Bot Token).');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (cleanToken) {
+        const { error: tokenErr } = await supabase.functions.invoke('save-secret', {
+          body: {
+            name: 'TELEGRAM_BOT_TOKEN',
+            value: cleanToken,
+            kind: 'telegram',
+            module: null,
+          },
+        });
+        if (tokenErr) throw tokenErr;
+        setTelegramBotToken('');
+      }
+
+      if (cleanChatId) {
+        const { error: chatErr } = await supabase.functions.invoke('save-secret', {
+          body: {
+            name: 'TELEGRAM_CHAT_ID',
+            value: cleanChatId,
+            kind: 'telegram',
+            module: null,
+          },
+        });
+        if (chatErr) throw chatErr;
+      }
+
+      const parsedThreshold = parseInt(alertThreshold, 10);
+      if (!isNaN(parsedThreshold)) {
+        const startHour = parseInt(quietHoursStart.split(':')[0] ?? '23', 10);
+        const endHour = parseInt(quietHoursEnd.split(':')[0] ?? '8', 10);
+        await supabase
+          .from('user_settings')
+          .update({
+            alert_threshold: parsedThreshold,
+            quiet_hours_start: isNaN(startHour) ? 23 : startHour,
+            quiet_hours_end: isNaN(endHour) ? 8 : endHour,
+          })
+          .neq('id', '00000000-0000-0000-0000-000000000000');
+      }
+
+      await fetchSecrets();
+      showToast('Saved Telegram configuration');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to save Telegram configuration';
+      Alert.alert('Error', msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleDetectTelegramChat() {
     setLoading(true);
     try {
+      if (telegramBotToken.trim()) {
+        const { error: tokenErr } = await supabase.functions.invoke('save-secret', {
+          body: {
+            name: 'TELEGRAM_BOT_TOKEN',
+            value: telegramBotToken.trim(),
+            kind: 'telegram',
+            module: null,
+          },
+        });
+        if (tokenErr) throw tokenErr;
+        setTelegramBotToken('');
+        await fetchSecrets();
+      }
+
       const { data, error } = await supabase.functions.invoke('detect-telegram-chat');
       if (error) throw error;
 
       const chats = data?.chats ?? [];
       setDetectedChats(chats);
       if (chats.length === 0) {
-        Alert.alert('No Chats Detected', 'Please send a message to your Telegram bot first, then tap Detect Chat again.');
+        Alert.alert('No Chats Detected', 'Please send a message (like /start) to your Telegram bot first, then tap Detect Chat again.');
       } else if (chats.length === 1) {
         setTelegramChatId(chats[0].id);
         Alert.alert('Chat Detected', `Selected chat: ${chats[0].title || chats[0].username || chats[0].id}`);
@@ -216,16 +297,49 @@ export default function SecretsScreen() {
   }
 
   async function handleSendTelegramTest() {
+    const cleanToken = telegramBotToken.trim();
+    const cleanChatId = telegramChatId.trim();
+
     setLoading(true);
     try {
-      const { error } = await supabase.functions.invoke('send-telegram-test', {
-        body: { chat_id: telegramChatId.trim() },
+      if (cleanToken) {
+        const { error: tokenErr } = await supabase.functions.invoke('save-secret', {
+          body: {
+            name: 'TELEGRAM_BOT_TOKEN',
+            value: cleanToken,
+            kind: 'telegram',
+            module: null,
+          },
+        });
+        if (tokenErr) throw tokenErr;
+        setTelegramBotToken('');
+      }
+
+      if (cleanChatId) {
+        const { error: chatErr } = await supabase.functions.invoke('save-secret', {
+          body: {
+            name: 'TELEGRAM_CHAT_ID',
+            value: cleanChatId,
+            kind: 'telegram',
+            module: null,
+          },
+        });
+        if (chatErr) throw chatErr;
+      }
+
+      const { data, error } = await supabase.functions.invoke('send-telegram-test', {
+        body: {
+          chat_id: cleanChatId || undefined,
+          bot_token: cleanToken || undefined,
+        },
       });
       if (error) throw error;
-      Alert.alert('Success', 'Test notification sent to Telegram.');
+      if (data?.error) throw new Error(data.error);
+      await fetchSecrets();
+      Alert.alert('Success ✅', 'Test notification sent to Telegram!');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to send test alert';
-      Alert.alert('Error', msg);
+      Alert.alert('Telegram Test Failed ❌', msg);
     } finally {
       setLoading(false);
     }
@@ -374,10 +488,34 @@ export default function SecretsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Telegram Alerts</Text>
         <Text style={styles.hintText}>
-          Instant alerts for leads with score at or above your threshold.
+          1. Create a bot via @BotFather on Telegram and paste its Bot Token below.{'\n'}
+          2. Send /start to your bot, then tap Detect Chat (or enter your Chat ID).{'\n'}
+          3. Tap Send Test to verify!
         </Text>
 
-        <Text style={styles.formLabel}>Telegram Chat ID</Text>
+        <Text style={styles.formLabel}>
+          Telegram Bot Token{' '}
+          {secrets.some((s) => s.name === 'TELEGRAM_BOT_TOKEN')
+            ? `(Saved: ${secrets.find((s) => s.name === 'TELEGRAM_BOT_TOKEN')?.masked_preview})`
+            : '(Not set)'}
+        </Text>
+        <TextInput
+          style={styles.input}
+          value={telegramBotToken}
+          onChangeText={setTelegramBotToken}
+          placeholder="Paste bot token from @BotFather (write-only)"
+          placeholderTextColor={colors.mutedForeground}
+          secureTextEntry
+          autoCapitalize="none"
+          accessibilityLabel="Telegram Bot Token"
+        />
+
+        <Text style={styles.formLabel}>
+          Telegram Chat ID{' '}
+          {secrets.some((s) => s.name === 'TELEGRAM_CHAT_ID')
+            ? `(Saved: ${secrets.find((s) => s.name === 'TELEGRAM_CHAT_ID')?.masked_preview})`
+            : '(Not set)'}
+        </Text>
         <TextInput
           style={styles.input}
           value={telegramChatId}
@@ -409,6 +547,16 @@ export default function SecretsScreen() {
             <Text style={styles.secondaryButtonText}>Send Test</Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={handleSaveTelegramConfig}
+          disabled={loading}
+          accessibilityRole="button"
+          accessibilityLabel="Save Telegram Config"
+        >
+          <Text style={styles.saveButtonText}>Save Telegram Config</Text>
+        </TouchableOpacity>
 
         {detectedChats.length > 1 && (
           <View style={styles.pickerBox}>

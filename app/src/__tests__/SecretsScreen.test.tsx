@@ -165,4 +165,36 @@ describe('SecretsScreen', () => {
       expect.any(Array)
     );
   });
+
+  it('saves Telegram Bot Token and Chat ID when Send Test is pressed', async () => {
+    renderScreen();
+    await screen.findByText('GROQ_API_KEY');
+
+    fireEvent.changeText(screen.getByLabelText('Telegram Bot Token'), '123456:ABC-DEF');
+    fireEvent.changeText(screen.getByLabelText('Telegram Chat ID'), '987654321');
+    fireEvent.press(screen.getByLabelText('Send Telegram Test'));
+
+    await waitFor(() => {
+      expect(supabase.functions.invoke).toHaveBeenCalledWith('save-secret', {
+        body: expect.objectContaining({
+          name: 'TELEGRAM_BOT_TOKEN',
+          value: '123456:ABC-DEF',
+          kind: 'telegram',
+        }),
+      });
+      expect(supabase.functions.invoke).toHaveBeenCalledWith('save-secret', {
+        body: expect.objectContaining({
+          name: 'TELEGRAM_CHAT_ID',
+          value: '987654321',
+          kind: 'telegram',
+        }),
+      });
+      expect(supabase.functions.invoke).toHaveBeenCalledWith('send-telegram-test', {
+        body: expect.objectContaining({
+          chat_id: '987654321',
+          bot_token: '123456:ABC-DEF',
+        }),
+      });
+    });
+  });
 });
