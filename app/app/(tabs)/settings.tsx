@@ -28,6 +28,7 @@ export default function SettingsScreen() {
   });
 
   const navItems = [
+    'Account / Auth',
     'Modules',
     'Secrets & Integrations',
     'Models',
@@ -40,15 +41,16 @@ export default function SettingsScreen() {
   ];
 
   const navLinks: Record<string, string> = {
+    'Account / Auth': '/auth',
     'Modules': '/settings/modules',
     'Secrets & Integrations': '/settings/secrets',
     'Models': '/settings/models',
     'Search Profiles': '/settings/search-profiles',
     'Locations & Niches': '/settings/niches',
+    'Alerts': '/settings/secrets',
     'Data': '/settings/data',
     'Collector Health': '/settings/collector-health',
     'About': '/settings/about',
-    'Account / Auth': '/auth',
   };
 
   function handleNav(item: string) {
