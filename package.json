@@ -4,6 +4,10 @@
   "private": true,
   "description": "Lead Finder — monorepo root",
   "scripts": {
+    "start": "npm --prefix app run start",
+    "android": "npm --prefix app run android",
+    "ios": "npm --prefix app run ios",
+    "web": "npm --prefix app run web",
     "test": "npm --prefix shared test && npm --prefix collector test && npm --prefix app test",
     "test:shared": "npm --prefix shared test",
     "test:collector": "npm --prefix collector test",
