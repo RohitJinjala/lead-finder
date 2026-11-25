@@ -35,6 +35,7 @@ export default function CollectorHealthScreen() {
   const [runs, setRuns] = useState<RunEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [missingKeys, setMissingKeys] = useState<string[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchHealthData();
@@ -42,13 +43,15 @@ export default function CollectorHealthScreen() {
 
   async function fetchHealthData() {
     setRefreshing(true);
+    setLoadError(null);
     try {
-      const { data: runData } = await supabase
+      const { data: runData, error: runErr } = await supabase
         .from('collector_runs')
         .select('*')
         .order('started_at', { ascending: false })
         .limit(10);
 
+      if (runErr) throw runErr;
       setRuns(runData ?? []);
 
       // Check model status for missing or invalid keys
@@ -62,8 +65,12 @@ export default function CollectorHealthScreen() {
       } else {
         setMissingKeys([]);
       }
-    } catch {
-      // Offline fallback
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Could not load collector runs.';
+      setLoadError(msg);
     } finally {
       setRefreshing(false);
     }
@@ -82,6 +89,13 @@ export default function CollectorHealthScreen() {
       <Text style={styles.screenSubtitle}>
         Automated collection runs every 30 minutes via GitHub Actions.
       </Text>
+
+      {loadError && (
+        <View style={styles.warningBanner}>
+          <Text style={styles.warningTitle}>Could not load runs</Text>
+          <Text style={styles.warningText}>{loadError}</Text>
+        </View>
+      )}
 
       {/* Warning Banners if any keys invalid */}
       {missingKeys.length > 0 && (

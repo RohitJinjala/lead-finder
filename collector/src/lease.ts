@@ -14,7 +14,7 @@ export async function acquireLease(supabase: SupabaseClient): Promise<boolean> {
 
   if (error) {
     console.error('[lease] Failed to acquire lease:', error.message);
-    return false;
+    throw new Error(`Failed to acquire collector lock: ${error.message}`);
   }
 
   return data === true;

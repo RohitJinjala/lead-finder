@@ -1,4 +1,4 @@
-import { Slot } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ThemeContext, useThemeProvider } from '../src/hooks/useTheme';
@@ -19,7 +19,7 @@ export default function RootLayout() {
           style={{ flex: 1, backgroundColor: themeProvider.colors.background }}
         >
           <StatusBar style={themeProvider.isDark ? 'light' : 'dark'} />
-          <Slot />
+          <Stack screenOptions={{ headerShown: false }} />
         </SafeAreaView>
       </SafeAreaProvider>
     </ThemeContext.Provider>
